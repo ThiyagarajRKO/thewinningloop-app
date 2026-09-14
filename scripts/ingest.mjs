@@ -28,6 +28,14 @@ try {
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
        ON CONFLICT (library_id) DO UPDATE SET
          ads_using_creative = EXCLUDED.ads_using_creative,
+         -- refresh the creative URL: a re-sweep may carry a higher-resolution
+         -- variant (s600x600 vs the s60x60 thumbnail), and the CDN URLs are
+         -- signed, so the newer one is also the only one that still loads.
+         creative_image = COALESCE(EXCLUDED.creative_image, ads.creative_image),
+         landing_url    = COALESCE(EXCLUDED.landing_url, ads.landing_url),
+         landing_domain = COALESCE(EXCLUDED.landing_domain, ads.landing_domain),
+         cta            = COALESCE(EXCLUDED.cta, ads.cta),
+         link_text      = COALESCE(EXCLUDED.link_text, ads.link_text),
          last_seen = now()
        RETURNING (xmax = 0) AS is_new`,
       [r.library_id, r.ad_details_url, r.advertiser_handle, r.advertiser_name,

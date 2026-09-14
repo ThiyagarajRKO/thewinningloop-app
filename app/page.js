@@ -10,11 +10,11 @@ const NAV = [
   { group: 'Ad intelligence', items: [
     { id: 'fb',        label: 'Facebook Adlibrary', icon: 'megaphone', live: true },
     { id: 'tiktok',    label: 'TikTok Adspy',       icon: 'music',
-      need: 'TikTok Commercial Content API is research-only: the endpoint is /v2/research/adlib/ and access is limited to academic and non-profit researchers in the US/EEA/UK. Commercial users are explicitly ineligible, and only European ad data is served. Not usable for this tool — a scraper of library.tiktok.com is the realistic path.' },
+      need: 'Blocked on both routes. The API is research-only (academic/non-profit, EU data only; commercial users explicitly ineligible). And library.tiktok.com/robots.txt disallows /ads, /api and /other-commercial-content by name, plus a blanket Disallow: / — so a scraper is not a legitimate workaround. Licensed resellers (Apify and similar) are the remaining option.' },
     { id: 'pinterest', label: 'Pinterest Adspy',    icon: 'image',
-      need: 'No Pinterest ad source connected. Their ad transparency data has no public API; would need a scraper like the Facebook one.' },
+      need: 'No public ads API, and pinterest.com/robots.txt runs an explicit bot allowlist — unlisted crawlers are disallowed by default, with a submission form for approval. Scraping without being allowlisted is not a legitimate path. Options: apply to their bot allowlist, or use a licensed data reseller.' },
     { id: 'fbpost',    label: 'Facebook Post Adspy', icon: 'message',
-      need: 'Organic post data is a separate source from the Ad Library. Needs a Page-scoped scraper or Graph API page access.' },
+      need: 'Tested the Ad Library page-scoped view (view_all_page_id) through the existing scraper: HTTP 403, zero cards parsed, page rendered in the wrong locale. The MCP notes this view often fails to hydrate headless. Organic posts are a different surface again and need Graph API page access, which requires owning or being granted access to the Page.' },
   ]},
   { group: 'Product research', items: [
     { id: 'stores',   label: 'Store Explorer',   icon: 'store',    live: true },
