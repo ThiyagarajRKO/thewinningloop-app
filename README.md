@@ -1,4 +1,4 @@
-# WinningHunter — Internal
+# AdVault
 
 Ad-spy tool over the public Facebook Ad Library, backed by Postgres.
 

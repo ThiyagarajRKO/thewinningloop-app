@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'WinningHunter Internal',
+  title: 'AdVault',
   description: 'Ad spy and product research over the Facebook Ad Library.',
 };
 

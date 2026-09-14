@@ -1,4 +1,4 @@
-# Style lock — WinningHunter Internal
+# Style lock — AdVault
 
 Established 2026-09-15. Cold start (no references, no prior profile).
 

@@ -3,14 +3,14 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import './globals.css';
 import { Icon, BrandMark } from './icons';
 
-/* Nav mirrors WinningHunter's feature set. `live` = real data behind it today.
+/* Nav mirrors AdVault's feature set. `live` = real data behind it today.
    Locked features render an honest not-connected state naming exactly what each needs —
    never a fake table of invented numbers. */
 const NAV = [
   { group: 'Ad intelligence', items: [
     { id: 'fb',        label: 'Facebook Adlibrary', icon: 'megaphone', live: true },
     { id: 'tiktok',    label: 'TikTok Adspy',       icon: 'music',
-      need: 'TikTok Commercial Content API — docs returned 503 on three attempts; approval + region access still unverified.' },
+      need: 'TikTok Commercial Content API is research-only: the endpoint is /v2/research/adlib/ and access is limited to academic and non-profit researchers in the US/EEA/UK. Commercial users are explicitly ineligible, and only European ad data is served. Not usable for this tool — a scraper of library.tiktok.com is the realistic path.' },
     { id: 'pinterest', label: 'Pinterest Adspy',    icon: 'image',
       need: 'No Pinterest ad source connected. Their ad transparency data has no public API; would need a scraper like the Facebook one.' },
     { id: 'fbpost',    label: 'Facebook Post Adspy', icon: 'message',
@@ -20,15 +20,15 @@ const NAV = [
     { id: 'stores',   label: 'Store Explorer',   icon: 'store',    live: true },
     { id: 'magic',    label: 'Magic AI',         icon: 'sparkles', live: true },
     { id: 'tracker',  label: 'Store Tracker',    icon: 'chart',
-      need: 'Revenue/traffic over time needs repeat polling of each store. Shopify keys are in .env but no tracker worker exists yet.' },
+      need: 'Needs repeat polling of each store over time. Public /products.json works on some stores (corecareshop.com returns 200) but not all (niraloom.com returns 503), so the worker needs per-store fallbacks and a scheduler.' },
     { id: 'trends',   label: 'Exploding Trends', icon: 'trending',
       need: 'Needs a time series per product. We hold one snapshot per sweep — run sweeps on a schedule first, then this becomes real.' },
     { id: 'reverse',  label: 'AI Reverse Ad Search', icon: 'search',
-      need: 'Image-similarity search over ad creatives. Needs an embedding model + pgvector on winninghunter_v1.' },
+      need: 'pgvector 0.8.6 is already available on this Postgres. What is missing is an embedding model to vectorise the 228 stored creatives, plus a vector column and index. This is the closest blocked feature to done.' },
   ]},
   { group: 'Output', items: [
     { id: 'import',  label: 'Product Importing', icon: 'package',
-      need: 'Pushes a chosen product into your Shopify store as a draft. SHOPIFY_ADMIN_CLIENT_ID + secret are set in .env; the write path is not built.' },
+      need: 'Writes a chosen product into trackify-com.myshopify.com as a draft. SHOPIFY_ADMIN_CLIENT_ID and secret are set, but SHOPIFY_STOREFRONT_API_TOKEN is empty and no Admin API access token has been exchanged yet.' },
     { id: 'boards',  label: 'Saved Boards', icon: 'bookmark', live: true },
   ]},
 ];
@@ -46,7 +46,7 @@ export default function App() {
       <aside className="sidebar">
         <div className="brand">
           <BrandMark />
-          <span className="brand-name">Winning<em>Hunter</em></span>
+          <span className="brand-name">Ad<em>Vault</em></span>
         </div>
         <nav className="nav" aria-label="Features">
           {NAV.map(g => (
