@@ -1,0 +1,19 @@
+2026-09-15  pending-review  surface=app-shell  axis=classification
+  Chose App shell (sidebar+topbar) over a marketing-page treatment; skipped Step 2.5
+  macrostructure/narrative arc as the skill directs for shells.
+  Reason: internal research tool the user works inside, not a page scrolled once.
+
+2026-09-15  pending-review  surface=app-shell  axis=honesty
+  7 of 11 features render a not-connected state naming the exact blocker, instead of
+  placeholder tables or invented metrics.
+  Reason: user asked "make sure all these are possible" — showing fake data would answer
+  that question dishonestly. Needs user confirmation this is the preferred trade-off
+  over hiding unbuilt features from the nav entirely.
+
+2026-09-15  pending-review  surface=app-shell  axis=density
+  Dense app-shell spacing (nav rows space-3, card internals space-3/4), no marketing-scale
+  section padding. Reason: technical mood applied to a tool, per component-patterns.md.
+
+2026-09-15  pending-review  surface=app-shell  axis=motion
+  Kept skeleton shimmer at 1.4s despite the 300ms UI budget (audit MEDIUM).
+  Reason: continuous loading affordance, not a state transition; reduced-motion gated.
