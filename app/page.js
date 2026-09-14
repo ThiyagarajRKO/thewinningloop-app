@@ -71,7 +71,7 @@ export default function App() {
       <div className="main">
         <header className="topbar">
           <span className="crumb">{current?.live ? 'Connected' : 'Not connected'} / <b>{current?.label}</b></span>
-          <div className="topbar-right"><SweepMeta /></div>
+          <div className="topbar-right"><SweepMeta /><ThemeToggle /></div>
         </header>
         <main className="content">
           {view === 'fb' && <AdLibrary />}
@@ -290,8 +290,7 @@ function Stores({ mode }) {
             <tbody>
               {rows.map(r => (
                 <tr key={r.domain}>
-                  <td><a href={`https://${r.domain}`} target="_blank" rel="noreferrer"
-                         style={{ color: 'var(--accent)', fontFamily: 'var(--mono)', fontSize: 12 }}>{r.domain}</a></td>
+                  <td><a className="store-link" href={`https://${r.domain}`} target="_blank" rel="noreferrer">{r.domain}</a></td>
                   <td className="num">{fmt(r.ads)}</td>
                   <td className="num">{fmt(r.creatives)}</td>
                   <td><div className="bar" style={{ width: `${Math.max(4, (r.creatives / max) * 100)}%` }}
@@ -351,6 +350,29 @@ function NotConnected({ item }) {
         <code>{item.need}</code>
       </div>
     </div>
+  );
+}
+
+
+/* Theme toggle. Explicit choice persists and beats the system preference;
+   the pre-paint script in layout.js applies it before first render. */
+function ThemeToggle() {
+  const [theme, setTheme] = useState('light');
+  useEffect(() => {
+    setTheme(document.documentElement.getAttribute('data-theme') || 'light');
+  }, []);
+  const flip = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('advault-theme', next); } catch {}
+    setTheme(next);
+  };
+  return (
+    <button className="theme-toggle" onClick={flip}
+      aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+      title={theme === 'dark' ? 'Light theme' : 'Dark theme'}>
+      {theme === 'dark' ? <Icon.sun /> : <Icon.moon />}
+    </button>
   );
 }
 

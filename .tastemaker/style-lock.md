@@ -9,32 +9,97 @@ Established 2026-09-15. Cold start (no references, no prior profile).
 - Motion: App-shell track only (panel transitions, staggered table entrance, skeletons).
 
 ## Mood
-**technical** / dark-native. Builder-facing research tool.
+**technical**. Builder-facing research tool.
 
 ## Color contract
-Generated: `generate_palette.py --mood technical --mode dark` (triadic, base hue 188.6)
+Generated: `generate_palette.py --mood technical --seed 21` — **true companion pair**
+(same seed, both modes), triadic, base hue 170.9 / accent hue 290.9. Each mode
+independently contrast-solved and verified.
 
+### Light (default)
 | Role | Hex |
 |---|---|
-| text | `#e5f6f4` |
-| bg | `#0d1514` |
-| surface | `#18201f` |
-| primary | `#0e837c` |
+| text | `#121d19` |
+| bg | `#f2fcf8` |
+| surface | `#e8f2ee` |
+| primary | `#158569` |
 | on-primary | `#ffffff` |
-| secondary | `#143432` |
-| accent | `#b28bd2` |
-| border | `#242c2b` |
+| secondary | `#c1e9da` |
+| accent | `#7664bb` |
+| border | `#d7e1dd` |
 
-### Legal pairings (verified, 21 pairs)
-- **Text-safe (>=4.5)**: bg/on-primary 18.51, surface/on-primary 16.60, text/bg 16.59, text/surface 14.87, border/on-primary 14.28, text/border 12.80, bg/accent 6.63, surface/accent 5.94, accent/border 5.11, primary/on-primary 4.61
-- **UI-safe (>=3.0)**: text/primary 4.13, bg/primary 4.02, surface/primary 3.60, primary/border 3.10
-- **Decorative (<3.0, must not be sole state carrier)**: accent/on-primary, text/accent, primary/accent, bg/border, surface/border, text/on-primary, bg/surface
+**Text-safe (>=4.5)**: text/on-primary 17.28, text/bg 16.50, text/surface 15.11,
+text/border 12.92, accent/on-primary 4.87, bg/accent 4.65, primary/on-primary 4.57
+**UI-safe (>=3.0)**: bg/primary 4.37, surface/accent 4.26, surface/primary 4.00,
+text/primary 3.78, accent/border 3.64, text/accent 3.55, primary/border 3.42
+**Decorative (<3.0)**: border/on-primary, bg/border, surface/border, surface/on-primary,
+bg/surface, primary/accent, bg/on-primary
 
-**Rules derived from the matrix:**
-- Button labels on `primary` fill → `on-primary` (4.61, text-safe). Never `text` on `primary` (4.13 = UI-safe only, not for body).
-- `accent` on `bg`/`surface` is text-safe — use for links/highlights.
-- `accent` is NEVER a text-bearing fill (accent/on-primary = 2.79, fails).
-- `border` hairlines on bg/surface are decorative-only — never the sole state signal.
+### Dark (companion, same seed)
+| Role | Hex |
+|---|---|
+| text | `#e7f6f0` |
+| bg | `#09100d` |
+| surface | `#141b18` |
+| primary | `#158569` |
+| on-primary | `#ffffff` |
+| secondary | `#11352b` |
+| accent | `#9f8fea` |
+| border | `#1f2724` |
+
+**Text-safe (>=4.5)**: bg/on-primary 19.24, surface/on-primary 17.50, text/bg 17.26,
+text/surface 15.70, border/on-primary 15.28, text/border 13.71, bg/accent 6.95,
+surface/accent 6.33, accent/border 5.53, primary/on-primary 4.57
+**UI-safe (>=3.0)**: bg/primary 4.21, text/primary 4.10, surface/primary 3.83, primary/border 3.34
+
+### Derived tokens (not from the generator — verified separately)
+- `--accent-text` **light** `#584a91`: the raw accent fails the 4.5 text floor on light
+  surfaces (3.55-4.26). Darkened variant verified **7.15:1 on bg, 6.55:1 on surface**.
+  In dark mode `--accent-text` = the raw accent (already 6.33 on surface).
+- `--text-muted` **light** `#5a6b65` verified **5.38:1 on bg, 4.93:1 on surface**;
+  **dark** `#8ba39b` (carried from the previous verified dark set).
+
+**Rules:**
+- Button labels on `primary` fill -> `on-primary` (4.57 light / 4.57 dark).
+- Small accent-coloured TEXT must use `--accent-text`, never raw `--accent`.
+- Raw `--accent` is for non-text marks only (status dots, focus rings, brand mark).
+- `border` hairlines are decorative-only in both modes — never the sole state signal.
+
+## Dark mode
+**Runtime toggle — both modes ship, user-switchable.** `data-theme` attribute on
+`<html>`, defaulting from `prefers-color-scheme`, explicit choice persisted to
+`localStorage` under `advault-theme`, applied by a pre-paint inline script in
+`layout.js` so a returning dark user sees no flash of light.
+
+
+## Light-mode surface rework (Google/Material model)
+User feedback: the sidebar and stat cards read wrong as a tinted mint fill darker
+than the canvas. Reworked to Google's surface model — **white cards on a tinted-grey
+canvas**, separated by elevation shadow + hairline rather than by fill weight.
+
+The M3 docs page is JS-rendered and returned no body to fetch, so these neutrals are
+derived from the approach and **measured**, not copied from a spec sheet.
+
+| Role | Was (mint) | Now (Google model) |
+|---|---|---|
+| bg (canvas) | `#f2fcf8` | `#f4f6f8` |
+| surface (cards/sidebar) | `#e8f2ee` | `#ffffff` |
+| border | `#d7e1dd` | `#e1e5ea` |
+| text | `#121d19` | `#1a1f24` |
+| secondary (hover) | `#c1e9da` | `#f1f3f5` |
+| active-fill (new) | — | `#e6f2ee` |
+
+Re-verified after the swap: text/surface 16.60, text/bg 15.32, surface/primary 4.57,
+surface/accent 4.87, text-muted/surface 5.64, text-muted/bg 5.20, accent-text/surface 7.49,
+accent-text/bg 6.91, text/secondary-hover 14.92, text/active-fill 14.46.
+
+**Measured failure that shaped the design:** `primary` `#158569` as TEXT on the active
+pill `#e6f2ee` is **3.99:1 — fails the 4.5 floor**. So the active nav row carries state
+via the tinted fill + a primary-tinted icon + weight, with the label in `--text`.
+Primary is never used as text on that pill.
+
+`primary` and `accent` are unchanged, so the brand mark is identical in both modes.
+Dark mode is untouched.
 
 ## Shell chrome mapping
 - Sidebar bg: `surface` · Content bg: `bg` · Topbar: `bg` + `border` hairline
