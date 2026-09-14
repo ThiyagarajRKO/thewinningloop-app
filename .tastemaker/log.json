@@ -1,0 +1,37 @@
+{
+  "builds": [
+    {
+      "date": "2026-09-15",
+      "surface": "app-shell",
+      "note": "Internal ad-spy tool. Step 2.5 (macrostructure/narrative arc) deliberately skipped per SKILL.md — that layer governs public/marketing pages, and this is a sidebar+topbar shell with no hero and no scroll narrative.",
+      "shell": {
+        "frame": "sidebar-left + contextual topbar",
+        "sidebar_bg": "surface",
+        "content_bg": "bg",
+        "active_nav": "primary left-border + secondary fill",
+        "density": "dense (nav rows space-3, card internals space-3/4)"
+      },
+      "mood": "technical",
+      "mode": "dark",
+      "palette_source": "generate_palette.py --mood technical --mode dark",
+      "palette": {
+        "text": "#e5f6f4", "bg": "#0d1514", "surface": "#18201f",
+        "primary": "#0e837c", "on-primary": "#ffffff", "secondary": "#143432",
+        "accent": "#b28bd2", "border": "#242c2b"
+      },
+      "contrast": "21 pairs verified; 10 text-safe, 4 UI-safe, 7 decorative",
+      "type": { "display": "Archivo", "body": "IBM Plex Sans", "data": "IBM Plex Mono" },
+      "motion": {
+        "track": "app-shell",
+        "used": ["staggered row entrance on data-load (28ms, cap 12)", "skeleton screens mirroring real layout", "border-color hover on cards/inputs"],
+        "not_used": ["ScrollTrigger", "pinned sections", "scrubbed reveals"],
+        "reason": "No scroll narrative exists in a persistent shell."
+      },
+      "icons": { "set": "lucide via Iconify", "count": 18, "attribution": "none required" },
+      "illustrations": "NOT generated — ~/.ideagram/undraw/ is unpopulated. Empty states use code-native SVG in the locked palette. Stated plainly, not overclaimed.",
+      "photos": "none — an app shell has no photo surface; the scraped ad creatives are the real imagery",
+      "stack_note": "React + plain CSS, no Tailwind/shadcn detected. Registries do not apply; patterns ported by hand per component-sourcing.md Step 0.",
+      "critique": { "show_dont_tell": 4, "philosophy": 4, "hierarchy": 4, "specificity": 4, "restraint": 4, "variety": 3 }
+    }
+  ]
+}
