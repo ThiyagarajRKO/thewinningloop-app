@@ -10,20 +10,46 @@ const fmt = n => new Intl.NumberFormat('en-US').format(n ?? 0);
 const fmtDate = d => d ? new Intl.DateTimeFormat('en-US', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(d)) : '—';
 const fmtDur = s => s == null ? null : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
-// fbcdn serves creatives with Access-Control-Allow-Origin: * but no
-// Content-Disposition header — verified live via curl -I on both the image
-// and video hosts — so a plain <a download href="https://fbcdn..."> just
-// navigates instead of saving. Fetching the bytes as a blob and clicking a
-// synthetic object-URL anchor forces a real save regardless of what
-// Facebook's CDN sends back, since the browser treats a blob: URL as
-// same-origin for download purposes.
+// A direct client-side fetch() to fbcdn fails: the CDN 302-redirects to a
+// signed URL that doesn't carry Access-Control-Allow-Origin, so the browser's
+// CORS check rejects the follow-through — confirmed live in the browser
+// console (a plain `curl -I` on the first URL looked clean, but curl doesn't
+// enforce CORS at all, so that first check was misleading). Routed through
+// our own /api/ads/download instead: a server-to-server fetch has no CORS
+// restriction, and the route sets Content-Disposition: attachment so the
+// browser actually saves the file rather than navigating to it.
 async function downloadFile(url, filename) {
-  const res = await fetch(url);
+  const proxied = `/api/ads/download?${new URLSearchParams({ url, filename })}`;
+  const res = await fetch(proxied);
+  if (!res.ok) throw new Error(`download failed (${res.status})`);
   const blob = await res.blob();
   const objectUrl = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = objectUrl;
   a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(objectUrl);
+}
+
+// "Download all" — one .zip instead of looping downloadFile() per item.
+// A client-side loop of N individual downloads is unreliable past 2-3 files
+// (browsers block rapid multi-downloads as popup spam, and there's no single
+// progress signal), so this mirrors Google Photos: one request, one archive,
+// built server-side by /api/ads/download-zip and streamed straight to disk.
+async function downloadZipFile(files, zipName) {
+  const res = await fetch('/api/ads/download-zip', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ files, zipName }),
+  });
+  if (!res.ok) throw new Error(`zip download failed (${res.status})`);
+  const blob = await res.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = objectUrl;
+  a.download = `${zipName}.zip`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -72,7 +98,7 @@ export default function AdDetail({ params }) {
       .catch(() => setErr('failed to load'));
   }, [id]);
 
-  if (err) return <Shell><div className="empty"><h2>Ad not found</h2><p>{err}</p><Link className="btn" href="/">Back to library</Link></div></Shell>;
+  if (err) return <Shell><div className="empty"><h2>Ad not found</h2><p>{err}</p><Link className="btn" href="/?view=fb">Back to library</Link></div></Shell>;
   if (!data) return <Shell><DetailSkeleton /></Shell>;
 
   const { ad, siblings, domainStats } = data;
@@ -82,7 +108,7 @@ export default function AdDetail({ params }) {
   return (
     <Shell>
       <nav className="detail-crumb">
-        <Link href="/">Facebook Adlibrary</Link>
+        <Link href="/?view=fb">Facebook Adlibrary</Link>
         <span aria-hidden="true">/</span>
         <b>{ad.advertiser_name || 'Unknown advertiser'}</b>
         <Link className="btn btn-ghost detail-crumb-back" href="/?view=fb">
@@ -224,7 +250,7 @@ function Shell({ children }) {
       <Sidebar view="fb" onSelect={goTo} />
       <div className="main">
         <header className="topbar">
-          <span className="crumb"><Link href="/">Facebook Adlibrary</Link></span>
+          <span className="crumb"><Link href="/?view=fb">Facebook Adlibrary</Link></span>
         </header>
         <main className="content">{children}</main>
       </div>
@@ -299,12 +325,14 @@ function AttachmentsSection({ siblings, advertiserName }) {
   const downloadAll = async () => {
     setBusy('all');
     try {
-      for (const item of items) {
+      const files = items.map(item => {
         const ext = item.kind === 'video' ? 'mp4' : 'jpg';
-        await downloadFile(item.creative_video || item.creative_image, `${item.library_id}.${ext}`);
-      }
+        return { url: item.creative_video || item.creative_image, filename: `${item.library_id}.${ext}` };
+      });
+      await downloadZipFile(files, `${advertiserName || 'attachments'}`);
     } catch {
-      // same as downloadOne — a mid-batch failure just stops the loop early
+      // zip build failing (network, all fbcdn signatures expired) shouldn't
+      // crash the page — individual items can still be downloaded one by one
     } finally {
       setBusy(null);
     }
@@ -318,7 +346,7 @@ function AttachmentsSection({ siblings, advertiserName }) {
           <p className="mono-dim">{items.length} video{items.length === 1 ? '' : 's'}, images &amp; carousels from {advertiserName}</p>
         </div>
         <button type="button" className="btn btn-ghost" onClick={downloadAll} disabled={busy !== null}>
-          {busy === 'all' ? 'Downloading…' : <><Icon.download size={14} /> Download all</>}
+          {busy === 'all' ? <><span className="row-spinner" /> Zipping…</> : <><Icon.download size={14} /> Download all (.zip)</>}
         </button>
       </div>
 
