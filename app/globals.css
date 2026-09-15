@@ -140,9 +140,10 @@ input::placeholder{color:var(--text-muted)}
 input:hover,select:hover{border-color:var(--text-muted)}
 input:focus,select:focus{outline:none;border-color:var(--primary);
   box-shadow:0 0 0 3px rgba(21,133,105,.15)}
-.btn{position:relative;background:var(--primary);color:var(--on-primary);border:0;
+.btn{position:relative;display:inline-flex;align-items:center;gap:var(--s2);
+  background:var(--primary);color:var(--on-primary);border:0;
   padding:var(--s3) var(--s4);border-radius:var(--r-pill);font:600 13px/1.2 var(--sans);
-  cursor:pointer;transition:opacity var(--dur-ui) var(--ease)}
+  cursor:pointer;text-decoration:none;transition:opacity var(--dur-ui) var(--ease)}
 /* elevation lives on a pseudo-element so only OPACITY animates (gate 29):
    transitioning box-shadow itself repaints every frame. */
 .btn::after{content:"";position:absolute;inset:0;border-radius:inherit;
@@ -253,6 +254,9 @@ input:focus,select:focus{outline:none;border-color:var(--primary);
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
   [data-reveal]{opacity:1;transform:none}
+  /* the global .01ms override already stops the spin; this swaps the frozen
+     mid-rotation frame for a static color break so it doesn't read as broken */
+  .row-spinner{border-top-color:var(--border);background:var(--primary)}
 }
 
 
@@ -338,3 +342,108 @@ input:focus,select:focus{outline:none;border-color:var(--primary);
 .research-form{margin-bottom:var(--s6)}
 
 .trends-spark-lg{height:80px}
+
+
+/* market verdict — reuses .trends-delta .up/.down for the label, this adds the wrapper */
+.market-verdict{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s2);
+  padding-top:var(--s3);margin-top:var(--s3);border-top:1px solid var(--border)}
+
+.related-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:var(--s4);margin-top:var(--s4)}
+.related-row{display:flex;align-items:center;gap:var(--s2);padding:var(--s2) 0;
+  border-bottom:1px solid var(--border);font-size:13px}
+.related-row:last-child{border-bottom:0}
+.related-row > span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-mini{background:transparent;border:1px solid var(--border);color:var(--text-muted);
+  padding:2px var(--s2);border-radius:var(--r-pill);font:500 11px/1.4 var(--sans);
+  cursor:pointer;flex:none}
+.btn-mini:hover{color:var(--text);border-color:var(--primary)}
+.tag-swept{font:500 10px/1 var(--sans);color:var(--text-muted);background:var(--secondary);
+  padding:3px var(--s2);border-radius:var(--r-pill);flex:none}
+
+
+.daily-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s4);flex-wrap:wrap}
+.daily-row{cursor:pointer}
+.daily-row:hover{background:var(--secondary)}
+.daily-row:focus-visible{outline:2px solid var(--primary);outline-offset:-2px}
+.daily-articles{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.daily-articles a{color:var(--accent-text);font-size:12px}
+.daily-articles a:hover{text-decoration:underline}
+
+
+.research-intro-row{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s4);flex-wrap:wrap}
+
+
+/* table pagination: info bottom-left, numbered pager bottom-right */
+.table-pager{display:flex;justify-content:space-between;align-items:center;
+  gap:var(--s4);flex-wrap:wrap;margin-top:var(--s3)}
+.table-pager-info{display:flex;align-items:center;gap:var(--s3)}
+.page-size-select{padding:4px var(--s2);font-size:12px}
+.pager-nums{display:flex;align-items:center;gap:4px}
+.pager-btn{background:var(--surface);border:1px solid var(--border);color:var(--text-muted);
+  min-width:28px;height:28px;padding:0 6px;border-radius:var(--r-sm);font:500 12px/1 var(--mono);
+  cursor:pointer;transition:background-color var(--dur-ui) var(--ease),color var(--dur-ui) var(--ease)}
+.pager-btn:hover:not(:disabled){background:var(--secondary);color:var(--text)}
+.pager-btn:disabled{opacity:.35;cursor:default}
+.pager-btn.active{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+.pager-ellipsis{color:var(--text-muted);padding:0 2px}
+
+
+/* ================= TREND DETAIL PANEL (slide-in drawer) ================= */
+/* Base UI Dialog styled as a right-side panel, per library-selection.md —
+   sourced for correct focus trap + Escape/backdrop dismissal rather than
+   hand-rolled. Motion: only transform/opacity (gate 29), --dur-panel 240ms
+   (the lock's own "panel switch" token — App-shell motion track, no new
+   timing invented). [data-starting-style]/[data-ending-style] are Base UI's
+   own hooks for enter/exit, so the slide only plays while actually
+   mounting/unmounting, not on every re-render. */
+.panel-backdrop{position:fixed;inset:0;background:rgba(15,20,18,.32);
+  opacity:0;transition:opacity var(--dur-panel) var(--ease);z-index:40}
+.panel-backdrop[data-open]{opacity:1}
+.panel-backdrop[data-starting-style]{opacity:0}
+.panel-backdrop[data-ending-style]{opacity:0}
+
+.panel-popup{position:fixed;top:0;right:0;height:100dvh;width:min(440px,100vw);
+  background:var(--surface);border-left:1px solid var(--border);
+  box-shadow:var(--shadow-raised);z-index:41;display:flex;flex-direction:column;
+  overflow-y:auto;padding:var(--s6);gap:var(--s4);
+  transform:translateX(0);transition:transform var(--dur-panel) var(--ease);
+  outline:none}
+.panel-popup[data-starting-style]{transform:translateX(100%)}
+.panel-popup[data-ending-style]{transform:translateX(100%)}
+
+.panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s3)}
+.panel-title{font-size:17px;letter-spacing:-.01em;margin-top:2px;overflow-wrap:anywhere}
+.panel-close{flex:none;display:flex;align-items:center;justify-content:center;
+  width:32px;height:32px;background:transparent;border:1px solid var(--border);
+  border-radius:var(--r-pill);color:var(--text-muted);cursor:pointer;
+  transition:color var(--dur-ui) var(--ease),background-color var(--dur-ui) var(--ease)}
+.panel-close:hover{color:var(--text);background:var(--secondary)}
+
+.panel-stats{display:flex;gap:var(--s3)}
+.panel-stat{flex:1;background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--r);padding:var(--s3);display:flex;flex-direction:column;gap:4px}
+
+.panel-chart-wrap{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);
+  padding:var(--s3);min-height:260px;display:flex;align-items:center;justify-content:center}
+.panel-chart-loading{display:flex;flex-direction:column;align-items:center;gap:var(--s3)}
+
+.panel-block{display:flex;flex-direction:column;gap:var(--s2)}
+
+.chart-tooltip{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);
+  padding:var(--s2) var(--s3);box-shadow:var(--shadow-raised);display:flex;flex-direction:column;gap:2px;
+  font-size:12px}
+
+.daily-row-active{background:var(--active-fill)}
+
+/* row-level loading spinner: transform-only (rotate), reduced-motion swaps
+   it for a static dot rather than freezing mid-spin */
+.row-spinner{display:inline-block;width:12px;height:12px;border-radius:50%;
+  border:2px solid var(--border);border-top-color:var(--primary);
+  animation:spin .7s linear infinite}
+.row-spinner-lg{width:22px;height:22px;border-width:3px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media (max-width:520px){
+  .panel-popup{width:100vw}
+}

@@ -14,6 +14,7 @@
 
 import { pool } from '../../../lib/db.mjs';
 import { interestOverTime } from '../../../lib/trends-client.mjs';
+import { marketContext, marketVerdict } from '../../../lib/market.mjs';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,18 +36,23 @@ export async function GET(req) {
   }
 
   try {
-    const points = await interestOverTime([q], geo, timeframe);
+    const [points, market] = await Promise.all([
+      interestOverTime([q], geo, timeframe),
+      marketContext(q),
+    ]);
     const avg = points.reduce((a, pt) => a + pt.value, 0) / points.length;
+    const avgInterest = Math.round(avg * 10) / 10;
 
     const data = {
       available: true,
       term: q,
       geo: geo || 'worldwide',
       timeframe,
-      avg_interest: Math.round(avg * 10) / 10,
+      avg_interest: avgInterest,
       points,
       fetched_at: new Date().toISOString(),
       source: 'live',
+      market: { ...market, verdict: marketVerdict(avgInterest, market.advertisers) },
     };
 
     cache.set(key, { at: Date.now(), data });

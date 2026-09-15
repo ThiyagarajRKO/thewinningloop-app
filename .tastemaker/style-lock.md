@@ -136,6 +136,23 @@ Radius: 8px default, 6px controls, 999px pills.
 - Photography: none — app shell has no photo surface. Ad creatives ARE the imagery (real fbcdn URLs from scraped data).
 - Illustrations: unDraw library NOT populated; empty states use code-native SVG in locked palette. Stated honestly, not overclaimed.
 
+## Behavioral primitives (Step 1.5)
+Stack has no Tailwind/shadcn (plain React + hand-rolled CSS, confirmed in package.json)
+— registries don't apply, but library-selection.md's *behavioral* defaults still do since
+they're framework-agnostic, unstyled component libraries:
+- **Slide-in / overlay panels** → `@base-ui/react` (Dialog). Installed 1.8.0.
+  Caught mid-install: `@base-ui-components/react` (the RC package) is **deprecated**,
+  renamed to `@base-ui/react` — installed the wrong one first via npm's own suggestion,
+  caught the deprecation warning, switched. Unstyled by design; styled entirely to the
+  tokens above (`.panel-*` classes in globals.css). Uses its own `[data-open]`/
+  `[data-starting-style]`/`[data-ending-style]` attributes for enter/exit, not manual
+  state tracking — the CSS `transform`/`opacity` transitions key off those.
+- **Charts** → `recharts` 3.10.1. "Never hand-roll a chart" per library-selection.md —
+  the previous 8-bar CSS sparkline is gone from the detail view; `TrendsCard`'s small
+  inline sparkline (top-of-page, not the detail panel) still uses the CSS bars, which is
+  fine per that same rule — it's a decorative trend indicator, not a chart someone reads
+  values off of. The panel's `AreaChart` has real axes, gridlines, and a tooltip.
+
 ## Scan dispositions (recorded, not silently ignored)
 - `viewport-height` HIGH x2 — **fixed**: `.shell` and `.sidebar` now use `100dvh`.
 - `missing-alt` HIGH at icons.js:2 — **false positive**: line 2 is a comment. Every inline `<svg>` sets
@@ -143,3 +160,8 @@ Radius: 8px default, 6px controls, 999px pills.
 - `long-duration` MEDIUM, `shimmer 1.4s` — **earned, kept**: a skeleton shimmer is a continuous
   loading affordance, not a UI state transition. The 300ms budget governs state changes. The audit
   explicitly allows explained motion. It is reduced-motion gated.
+- `long-duration` MEDIUM, `.row-spinner spin .7s` (added for the trend detail panel) — **earned,
+  kept**: same reasoning as the shimmer above — a spinner on an in-flight network request is a
+  continuous loading affordance, not a state transition, and stopping it at 300ms while the fetch
+  is still running would misrepresent the actual wait. Reduced-motion swaps it for a static color
+  break (border-top-color change) instead of a frozen rotation frame.

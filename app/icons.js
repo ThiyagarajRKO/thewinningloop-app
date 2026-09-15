@@ -13,6 +13,7 @@ function Svg({ size = 16, children }) {
 }
 
 export const Icon = {
+  chevronLeft: p => <Svg {...p}><path d="m15 18-6-6 6-6" /></Svg>,
   dashboard: p => <Svg {...p}><rect x="3" y="3" width="7" height="9" rx="1" /><rect x="14" y="3" width="7" height="5" rx="1" /><rect x="14" y="12" width="7" height="9" rx="1" /><rect x="3" y="16" width="7" height="5" rx="1" /></Svg>,
   megaphone: p => <Svg {...p}><path d="m3 11 18-5v12L3 14v-3z" /><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" /></Svg>,
   music: p => <Svg {...p}><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></Svg>,
@@ -33,6 +34,7 @@ export const Icon = {
   moon: p => <Svg {...p}><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" /></Svg>,
   play: p => <Svg {...p}><path d="M6 4l14 8-14 8z" fill="currentColor" stroke="none" /></Svg>,
   link: p => <Svg {...p}><path d="M15 3h6v6" /><path d="M10 14 21 3" /><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /></Svg>,
+  close: p => <Svg {...p}><path d="M18 6 6 18M6 6l12 12" /></Svg>,
 };
 
 // Brand mark: two offset bars reading as a rising signal, inside a hexagonal aperture.
