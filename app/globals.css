@@ -153,6 +153,15 @@ input:focus,select:focus{outline:none;border-color:var(--primary);
 .btn:hover::after{opacity:1}
 .btn:disabled{opacity:.45;cursor:default}
 .btn:disabled::after{opacity:0}
+/* Secondary/optional actions — border only, no fill, so the eye still lands
+   on the one real .btn (solid primary) as the page's actual call to action.
+   Repeats every property .btn sets (not just the ones that differ) so this
+   always wins regardless of class order or where else .btn is composed with
+   another class at equal specificity. */
+a.btn.btn-ghost, button.btn.btn-ghost, .btn.btn-ghost{
+  background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.btn.btn-ghost::after{display:none}
+.btn.btn-ghost:hover{opacity:1;border-color:var(--primary);background:var(--secondary);color:var(--text)}
 .count{font:500 12px/1 var(--mono);color:var(--text-muted);margin-left:auto}
 
 /* ---------- ad grid: the creative IS the visual ---------- */
@@ -261,15 +270,16 @@ input:focus,select:focus{outline:none;border-color:var(--primary);
 
 
 /* ================= AD DETAIL PAGE ================= */
-.detail-shell{min-height:100dvh;background:var(--bg)}
-.detail-shell .topbar{padding:0 var(--s6);gap:var(--s3)}
-.detail-shell .content{max-width:1180px;margin:0 auto;width:100%}
-
+/* Detail page now reuses the standard .shell/.main/.content app-shell
+   classes (see app/nav.js Sidebar) instead of its own centered layout —
+   this crumb is the only detail-page-specific styling left. */
 .detail-crumb{display:flex;align-items:center;gap:var(--s2);margin-bottom:var(--s6);
   font:500 13px/1 var(--sans);color:var(--text-muted)}
 .detail-crumb a{color:var(--accent-text)}
 .detail-crumb a:hover{text-decoration:underline}
 .detail-crumb b{color:var(--text);font-weight:600}
+.detail-crumb a.detail-crumb-back{margin-left:auto;color:var(--text)}
+.detail-crumb a.detail-crumb-back:hover{text-decoration:none}
 
 .detail-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
   gap:var(--s6);align-items:start}

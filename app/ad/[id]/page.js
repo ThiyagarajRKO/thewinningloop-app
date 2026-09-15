@@ -1,8 +1,10 @@
 'use client';
 import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import '../../globals.css';
-import { Icon, BrandMark } from '../../icons';
+import { Icon } from '../../icons';
+import { Sidebar } from '../../nav';
 
 const fmt = n => new Intl.NumberFormat('en-US').format(n ?? 0);
 const fmtDate = d => d ? new Intl.DateTimeFormat('en-US', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(d)) : '—';
@@ -32,6 +34,9 @@ export default function AdDetail({ params }) {
         <Link href="/">Facebook Adlibrary</Link>
         <span aria-hidden="true">/</span>
         <b>{ad.advertiser_name || 'Unknown advertiser'}</b>
+        <Link className="btn btn-ghost detail-crumb-back" href="/?view=fb">
+          <Icon.chevronLeft size={14} /> Back to list
+        </Link>
       </nav>
 
       <div className="detail-grid">
@@ -149,15 +154,21 @@ export default function AdDetail({ params }) {
 }
 
 function Shell({ children }) {
+  const router = useRouter();
+  // This page lives outside the main ?view= shell, so selecting a nav item
+  // sends the user back to / on that view rather than swapping in place —
+  // same destination as clicking it from the shell itself.
+  const goTo = id => router.push(`/?view=${id}`);
+
   return (
-    <div className="detail-shell">
-      <header className="topbar">
-        <Link href="/" className="brand" style={{ padding: 0, height: 'auto' }}>
-          <BrandMark />
-          <span className="brand-name">Ad<em>Vault</em></span>
-        </Link>
-      </header>
-      <main className="content">{children}</main>
+    <div className="shell">
+      <Sidebar view="fb" onSelect={goTo} />
+      <div className="main">
+        <header className="topbar">
+          <span className="crumb"><Link href="/">Facebook Adlibrary</Link></span>
+        </header>
+        <main className="content">{children}</main>
+      </div>
     </div>
   );
 }
