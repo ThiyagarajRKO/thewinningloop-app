@@ -76,6 +76,47 @@ CREATE TABLE IF NOT EXISTS sweeps (
   ran_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- sync jobs: the UI-triggered counterpart to a manual scrape-fb.mjs + ingest.mjs
+-- run. A sync takes 1-3+ minutes (headless browser), so the API route that
+-- creates a row here returns immediately and a detached worker process updates
+-- it as the scrape/ingest actually progresses — this is what the UI polls.
+CREATE TABLE IF NOT EXISTS sync_jobs (
+  id          SERIAL PRIMARY KEY,
+  query       TEXT NOT NULL,
+  country     TEXT NOT NULL DEFAULT 'US',
+  status      TEXT NOT NULL DEFAULT 'queued', -- queued | scraping | ingesting | done | error
+  ads_found   INT,
+  ads_new     INT,
+  error       TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  finished_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS sync_jobs_created_idx ON sync_jobs (created_at DESC);
+
+
+-- Brand Tracker: one profile per store domain. Scraped from the store's own
+-- public surfaces (products.json, homepage HTML/runtime for theme+pixels,
+-- visible contact info) plus a Page-scoped Facebook Ad Library search for
+-- that brand's Meta ads. Deliberately does NOT include traffic/revenue
+-- estimates (no legitimate free data source for those) or Trustpilot
+-- (robots.txt disallows all crawlers except Google) or TikTok/Pinterest/
+-- Google ad counts (same walls already documented on the locked nav items).
+CREATE TABLE IF NOT EXISTS brand_profiles (
+  domain         TEXT PRIMARY KEY,
+  store_name     TEXT,
+  theme_name     TEXT,
+  product_count  INT,
+  products       JSONB DEFAULT '[]',       -- small sample, not the full catalog
+  pixels         TEXT[] DEFAULT '{}',      -- e.g. {meta,tiktok,google,pinterest,klaviyo} — runtime-detected
+  contact_email  TEXT,
+  fb_page_id     TEXT,
+  fb_active_ads  INT,
+  status         TEXT NOT NULL DEFAULT 'queued', -- queued | fetching | done | error
+  error          TEXT,
+  fetched_at     TIMESTAMPTZ,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 
 -- Google Trends snapshots, one per (term, geo). Fetched by the assistant session
 -- via the google-trends MCP tool (this app has no direct MCP access) and written

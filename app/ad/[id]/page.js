@@ -144,6 +144,11 @@ export default function AdDetail({ params }) {
             <span className={'status-pill ' + (ad.status === 'Active' ? 'on' : 'off')}>
               {ad.status || 'Unknown'}
             </span>
+            {ad.ad_details_url && (
+              <a className="btn btn-ghost detail-head-fb" href={ad.ad_details_url} target="_blank" rel="noreferrer">
+                <Icon.link size={13} /> Open on Facebook
+              </a>
+            )}
           </div>
 
           <AdScoreCard score={score} />
@@ -187,12 +192,7 @@ export default function AdDetail({ params }) {
           </section>
 
           <section className="detail-block">
-            <div className="detail-block-head">
-              <b>Record</b>
-              <a className="ad-library-link" href={ad.ad_details_url} target="_blank" rel="noreferrer">
-                Open in Ad Library <Icon.link size={11} />
-              </a>
-            </div>
+            <b>Record</b>
             <dl className="kv">
               <dt>Library ID</dt><dd className="mono-dim">{ad.library_id}</dd>
               <dt>Country</dt><dd className="mono-dim">{ad.country || '—'}</dd>

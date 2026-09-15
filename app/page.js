@@ -50,6 +50,7 @@ function AppShell() {
           {view === 'stores' && <Stores mode="explorer" />}
           {view === 'magic' && <MagicAI onOpenLibrary={() => setView('fb')} />}
           {view === 'gtrends' && <TrendsPage />}
+          {view === 'tracker' && <BrandTracker />}
           {view === 'boards' && <Boards />}
           {!current?.live && <NotConnected item={current} />}
         </main>
@@ -239,6 +240,7 @@ function AdLibrary() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [f, setF] = useState({ q: '', domain: '', minCreatives: '', media: '', sort: 'creatives' });
+  const [syncOpen, setSyncOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -247,22 +249,40 @@ function AdLibrary() {
     setAds(r.ads || []); setLoading(false);
   }, [f]);
 
+  const loadStats = useCallback(() => {
+    fetch('/api/stats').then(r => r.json()).then(setStats).catch(() => {});
+  }, []);
+
   useEffect(() => { load(); }, [load]);
-  useEffect(() => { fetch('/api/stats').then(r => r.json()).then(setStats).catch(() => {}); }, []);
+  useEffect(() => { loadStats(); }, [loadStats]);
 
   const set = k => e => setF(s => ({ ...s, [k]: e.target.value }));
   const onSubmit = e => { e.preventDefault(); load(); };
   const top = stats?.topDomains || [];
   const hot = ads.filter(a => a.ads_using_creative >= 5).length;
 
+  // A finished sync changed the underlying data — refresh both the grid and
+  // the KPI row so the new/updated ads actually show up without a manual reload.
+  const onSyncDone = () => { load(); loadStats(); };
+
   return (
     <>
       <div className="kpis">
-        <Kpi label="Ads indexed" value={stats?.stats?.ads} spark={top.map(d => d.ads)} />
+        <Kpi
+          label="Ads indexed"
+          value={stats?.stats?.ads}
+          spark={top.map((d) => d.ads)}
+        />
         <Kpi label="Advertisers" value={stats?.stats?.advertisers} />
         <Kpi label="Stores" value={stats?.stats?.domains} />
         <Kpi label="Scaling now" value={hot} hint="5+ creatives" />
       </div>
+
+      <SyncModal
+        open={syncOpen}
+        onOpenChange={setSyncOpen}
+        onDone={onSyncDone}
+      />
 
       {/* One Trends fetch per SEARCH, not per ad — Google throttles hard past that. */}
       <TrendsCard term={f.q} />
@@ -270,32 +290,137 @@ function AdLibrary() {
       <form className="filters" onSubmit={onSubmit} role="search">
         <div className="field">
           <Icon.search />
-          <label htmlFor="q" className="sr-only" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Search ad copy or advertiser</label>
-          <input id="q" placeholder="Search copy or advertiser…" value={f.q} onChange={set('q')} style={{ minWidth: 230 }} />
+          <label
+            htmlFor="q"
+            className="sr-only"
+            style={{
+              position: "absolute",
+              width: 1,
+              height: 1,
+              overflow: "hidden",
+              clip: "rect(0 0 0 0)",
+            }}
+          >
+            Search ad copy or advertiser
+          </label>
+          <input
+            id="q"
+            placeholder="Search copy or advertiser…"
+            value={f.q}
+            onChange={set("q")}
+            style={{ minWidth: 230 }}
+          />
         </div>
-        <label htmlFor="dom" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Filter by domain</label>
-        <input id="dom" placeholder="Domain…" value={f.domain} onChange={set('domain')} style={{ width: 150 }} />
-        <label htmlFor="minc" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Minimum creatives</label>
-        <input id="minc" type="number" min="1" placeholder="Min creatives" value={f.minCreatives} onChange={set('minCreatives')} style={{ width: 128 }} />
-        <label htmlFor="sort" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Sort order</label>
-        <label htmlFor="media" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Media type</label>
-        <select id="media" value={f.media} onChange={set('media')}>
+        <label
+          htmlFor="dom"
+          style={{
+            position: "absolute",
+            width: 1,
+            height: 1,
+            overflow: "hidden",
+            clip: "rect(0 0 0 0)",
+          }}
+        >
+          Filter by domain
+        </label>
+        <input
+          id="dom"
+          placeholder="Domain…"
+          value={f.domain}
+          onChange={set("domain")}
+          style={{ width: 150 }}
+        />
+        <label
+          htmlFor="minc"
+          style={{
+            position: "absolute",
+            width: 1,
+            height: 1,
+            overflow: "hidden",
+            clip: "rect(0 0 0 0)",
+          }}
+        >
+          Minimum creatives
+        </label>
+        <input
+          id="minc"
+          type="number"
+          min="1"
+          placeholder="Min creatives"
+          value={f.minCreatives}
+          onChange={set("minCreatives")}
+          style={{ width: 128 }}
+        />
+        <label
+          htmlFor="sort"
+          style={{
+            position: "absolute",
+            width: 1,
+            height: 1,
+            overflow: "hidden",
+            clip: "rect(0 0 0 0)",
+          }}
+        >
+          Sort order
+        </label>
+        <label
+          htmlFor="media"
+          style={{
+            position: "absolute",
+            width: 1,
+            height: 1,
+            overflow: "hidden",
+            clip: "rect(0 0 0 0)",
+          }}
+        >
+          Media type
+        </label>
+        <select id="media" value={f.media} onChange={set("media")}>
           <option value="">All media</option>
           <option value="video">Video only</option>
           <option value="image">Image only</option>
         </select>
-        <label htmlFor="sort" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Sort order</label>
-        <select id="sort" value={f.sort} onChange={set('sort')}>
+        <label
+          htmlFor="sort"
+          style={{
+            position: "absolute",
+            width: 1,
+            height: 1,
+            overflow: "hidden",
+            clip: "rect(0 0 0 0)",
+          }}
+        >
+          Sort order
+        </label>
+        <select id="sort" value={f.sort} onChange={set("sort")}>
           <option value="creatives">Most creatives</option>
           <option value="newest">Newest first</option>
           <option value="oldest">Oldest first</option>
         </select>
-        <button className="btn" type="submit" disabled={loading}>{loading ? 'Loading…' : 'Apply'}</button>
-        <span className="count">{loading ? '—' : `${ads.length} shown`}</span>
+        <button className="btn" type="submit" disabled={loading}>
+          {loading ? "Loading…" : "Apply"}
+        </button>
+        <button
+          type="button"
+          className="btn btn-ghost sync-trigger"
+          onClick={() => setSyncOpen(true)}
+        >
+          <Icon.download size={14} style={{ transform: "rotate(180deg)" }} />{" "}
+          Sync ads
+        </button>
+        <span className="count">{loading ? "—" : `${ads.length} shown`}</span>
       </form>
 
-      {loading ? <SkeletonGrid /> : ads.length === 0 ? <NoMatch /> : (
-        <div className="grid">{ads.map((a, i) => <AdCard key={a.library_id} ad={a} i={i} />)}</div>
+      {loading ? (
+        <SkeletonGrid />
+      ) : ads.length === 0 ? (
+        <NoMatch />
+      ) : (
+        <div className="grid">
+          {ads.map((a, i) => (
+            <AdCard key={a.library_id} ad={a} i={i} />
+          ))}
+        </div>
       )}
     </>
   );
@@ -316,9 +441,141 @@ function Kpi({ label, value, spark, hint }) {
   );
 }
 
+// ALL is a genuine Facebook Ad Library value ("every country"), verified
+// live before adding it here — 200 response, real ads parsed for a
+// country=ALL search, not assumed from docs.
+const SYNC_COUNTRIES = [
+  { v: 'ALL', label: 'Worldwide' }, { v: 'US', label: 'United States' },
+  { v: 'GB', label: 'United Kingdom' }, { v: 'IN', label: 'India' },
+  { v: 'AU', label: 'Australia' }, { v: 'CA', label: 'Canada' },
+];
+
+// Modal-triggered sync: POST /api/sync creates a job row and detaches a
+// worker process (scrape takes 1-3+ minutes — see scripts/sync-worker.mjs),
+// then this polls GET /api/sync/[id] every 2s until it reaches a terminal
+// state. Verified live end-to-end before wiring this UI: a real sync job ran
+// scrape -> ingest -> job row updated to "done" with real ad counts.
+function SyncModal({ open, onOpenChange, onDone }) {
+  const [query, setQuery] = useState('');
+  const [country, setCountry] = useState('US');
+  const [job, setJob] = useState(null);   // null = form; otherwise the polled job row
+  const [err, setErr] = useState(null);
+  const pollRef = useRef(null);
+
+  useEffect(() => () => clearInterval(pollRef.current), []);
+
+  const reset = () => { setJob(null); setErr(null); setQuery(''); clearInterval(pollRef.current); };
+
+  const start = async e => {
+    e.preventDefault();
+    const term = query.trim();
+    if (!term) return;
+    setErr(null);
+    try {
+      const res = await fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: term, country }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'failed to start sync');
+      setJob({ id: data.jobId, status: 'queued', query: term, country });
+
+      pollRef.current = setInterval(async () => {
+        const r = await fetch(`/api/sync/${data.jobId}`).then(r => r.json()).catch(() => null);
+        if (!r || r.error) return;
+        setJob(r);
+        if (r.status === 'done' || r.status === 'error') {
+          clearInterval(pollRef.current);
+          if (r.status === 'done') onDone();
+        }
+      }, 2000);
+    } catch (e2) {
+      setErr(e2.message);
+    }
+  };
+
+  const statusLabel = {
+    queued: 'Queued…', scraping: 'Scraping the Ad Library…',
+    ingesting: 'Saving results…', done: 'Done', error: 'Failed',
+  };
+
+  return (
+    <Dialog.Root open={open} onOpenChange={o => { onOpenChange(o); if (!o) reset(); }}>
+      <Dialog.Portal>
+        <Dialog.Backdrop className="panel-backdrop" />
+        <Dialog.Popup className="panel-popup panel-popup-modal sync-modal" aria-describedby={undefined}>
+          <div className="panel-head">
+            <div>
+              <span className="mono-dim">Facebook Ad Library</span>
+              <Dialog.Title className="panel-title">Sync ads</Dialog.Title>
+            </div>
+            <Dialog.Close className="panel-close" aria-label="Close">
+              <Icon.close size={16} />
+            </Dialog.Close>
+          </div>
+
+          {!job ? (
+            <form className="sync-form" onSubmit={start}>
+              <label htmlFor="sync-q">Search term</label>
+              <input id="sync-q" placeholder="e.g. posture corrector" value={query}
+                onChange={e => setQuery(e.target.value)} autoFocus required />
+
+              <label htmlFor="sync-country">Country</label>
+              <select id="sync-country" value={country} onChange={e => setCountry(e.target.value)}>
+                {SYNC_COUNTRIES.map(c => <option key={c.v} value={c.v}>{c.label}</option>)}
+              </select>
+
+              <p className="sync-hint">
+                Scrapes the public Ad Library page live (headless browser, no login,
+                no private API) and saves results to your database. Takes 1-3 minutes.
+              </p>
+
+              {err && (
+                <p className="panel-range-err"><Icon.alert size={13} />{err}</p>
+              )}
+
+              <button type="submit" className="btn">Start sync</button>
+            </form>
+          ) : (
+            <div className="sync-progress">
+              <div className="sync-progress-row">
+                {job.status === 'done' ? <Icon.trending size={16} />
+                  : job.status === 'error' ? <Icon.alert size={16} />
+                  : <span className="row-spinner row-spinner-lg" />}
+                <div>
+                  <b>{statusLabel[job.status] || job.status}</b>
+                  <span className="mono-dim">&quot;{job.query}&quot; · {job.country}</span>
+                </div>
+              </div>
+
+              {job.status === 'done' && (
+                <p className="sync-result">
+                  {fmt(job.ads_found)} ads found, {fmt(job.ads_new)} new — saved to your library.
+                </p>
+              )}
+              {job.status === 'error' && (
+                <p className="panel-range-err"><Icon.alert size={13} />{job.error || 'Something went wrong during the sync.'}</p>
+              )}
+
+              {(job.status === 'done' || job.status === 'error') && (
+                <div className="sync-actions">
+                  <button type="button" className="btn btn-ghost" onClick={reset}>Sync another term</button>
+                  <button type="button" className="btn" onClick={() => onOpenChange(false)}>Close</button>
+                </div>
+              )}
+            </div>
+          )}
+        </Dialog.Popup>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
 /* Staggered entrance on data-load (App-shell motion track), transform/opacity only. */
 function AdCard({ ad, i }) {
   const ref = useRef(null);
+  const router = useRouter();
   useEffect(() => {
     const el = ref.current; if (!el) return;
     const t = setTimeout(() => el.classList.add('in'), Math.min(i, 12) * 28);
@@ -327,9 +584,25 @@ function AdCard({ ad, i }) {
 
   const scale = ad.ads_using_creative || 1;
   const bars = Math.min(5, Math.max(1, Math.round(scale / 5)));
+  const href = `/ad/${ad.library_id}`;
+
+  // The whole card navigates to the detail page, but "Open on Facebook" is a
+  // real external link that needs its own <a> — nesting an <a> inside the
+  // card's own <a> is invalid HTML (browsers silently break it), so the card
+  // itself is a keyboard-focusable <article> with a click/Enter handler
+  // instead of a Link, leaving a real anchor free for the Facebook link.
+  const openDetail = e => {
+    if (e.target.closest('a')) return; // the Facebook link handles its own click
+    router.push(href);
+  };
+  const onKeyDown = e => {
+    if (e.key === 'Enter' && !e.target.closest('a')) router.push(href);
+  };
+
   return (
-    <Link className="card" href={`/ad/${ad.library_id}`} data-reveal ref={ref}
+    <article className="card" data-reveal ref={ref} tabIndex={0} role="link"
        aria-label={`View details for ${ad.advertiser_name || 'this advertiser'}`}
+       onClick={openDetail} onKeyDown={onKeyDown}
        onMouseEnter={e => { const v = e.currentTarget.querySelector('video'); if (v) v.play().catch(() => {}); }}
        onMouseLeave={e => { const v = e.currentTarget.querySelector('video'); if (v) { v.pause(); v.currentTime = 0; } }}>
       <div className="card-media">
@@ -352,6 +625,12 @@ function AdCard({ ad, i }) {
           </span>
           {scale}×
         </span>
+        {ad.ad_details_url && (
+          <a className="fb-badge" href={ad.ad_details_url} target="_blank" rel="noreferrer"
+             title="Open on Facebook" aria-label="Open this ad on Facebook">
+            <Icon.link size={11} />
+          </a>
+        )}
       </div>
       <div className="card-b">
         <h3 className="card-adv" title={ad.advertiser_name}>{ad.advertiser_name || 'Unknown advertiser'}</h3>
@@ -361,7 +640,7 @@ function AdCard({ ad, i }) {
           <span className="card-date">{fmtDate(ad.started_running)}</span>
         </div>
       </div>
-    </Link>
+    </article>
   );
 }
 
@@ -480,6 +759,144 @@ function TableSkeleton() {
     <div className="sk" aria-busy="true" aria-label="Loading stores" style={{ padding: 'var(--s4)' }}>
       {Array.from({ length: 8 }, (_, i) => <div className="sk-line" key={i} style={{ margin: '14px 0' }} />)}
     </div>
+  );
+}
+
+const PIXEL_LABELS = { meta: 'Meta', tiktok: 'TikTok', google: 'Google', pinterest: 'Pinterest', klaviyo: 'Klaviyo' };
+
+/* Brand Tracker — a saved profile per store domain (products, theme, pixels,
+   contact email, Meta/Facebook ads for that brand), scraped from the store's
+   own public surfaces + a Page-scoped Ad Library search. Deliberately does
+   NOT show traffic or revenue estimates (no legitimate free data source for
+   either) or Trustpilot (robots.txt disallows all crawlers but Google) or
+   TikTok/Pinterest/Google ad counts (same walls as the locked nav items) —
+   see db/schema.sql's brand_profiles comment for the full reasoning. */
+function BrandTracker() {
+  const [brands, setBrands] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [domainInput, setDomainInput] = useState('');
+  const [starting, setStarting] = useState(false);
+  const [err, setErr] = useState(null);
+  const [openDomain, setOpenDomain] = useState(null);
+  const pollRef = useRef(null);
+
+  const load = useCallback(async () => {
+    const r = await fetch('/api/brands').then(r => r.json()).catch(() => ({ brands: [] }));
+    setBrands(r.brands || []);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  // Poll while anything is queued/fetching so the list updates itself once
+  // a background worker finishes — same shape as the sync modal's polling.
+  useEffect(() => {
+    const pending = brands.some(b => b.status === 'queued' || b.status === 'fetching');
+    clearInterval(pollRef.current);
+    if (pending) pollRef.current = setInterval(load, 2500);
+    return () => clearInterval(pollRef.current);
+  }, [brands, load]);
+
+  const track = async e => {
+    e.preventDefault();
+    const domain = domainInput.trim();
+    if (!domain) return;
+    setStarting(true); setErr(null);
+    try {
+      const res = await fetch('/api/brands', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'failed to start');
+      setDomainInput('');
+      await load();
+    } catch (e2) {
+      setErr(e2.message);
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  const removeBrand = async domain => {
+    await fetch(`/api/brands/${domain}`, { method: 'DELETE' });
+    setBrands(bs => bs.filter(b => b.domain !== domain));
+    if (openDomain === domain) setOpenDomain(null);
+  };
+
+  const statusLabel = { queued: 'Queued…', fetching: 'Fetching…', done: 'Tracked', error: 'Failed' };
+
+  return (
+    <>
+      <div className="research-intro">
+        <h1>Brand Tracker</h1>
+        <p>Track a store: products, theme, tracking pixels, contact email, and its Facebook/Meta ads — pulled from the store's own public pages, saved so you don't re-fetch it every time.</p>
+      </div>
+
+      <form className="filters" onSubmit={track} role="search">
+        <div className="field" style={{ flex: 1, minWidth: 260 }}>
+          <Icon.store />
+          <label htmlFor="brand-domain" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Store domain</label>
+          <input id="brand-domain" placeholder="e.g. alynnewear.com" value={domainInput}
+            onChange={e => setDomainInput(e.target.value)} style={{ width: '100%' }} />
+        </div>
+        <button className="btn" type="submit" disabled={starting || !domainInput.trim()}>
+          {starting ? 'Starting…' : 'Track brand'}
+        </button>
+      </form>
+      {err && <p className="panel-range-err" style={{ marginBottom: 'var(--s4)' }}><Icon.alert size={13} />{err}</p>}
+
+      {loading ? <TableSkeleton /> : brands.length === 0 ? (
+        <div className="empty"><EmptyGlyph /><h2>No brands tracked yet</h2>
+          <p>Enter a store domain above — takes 20-60 seconds to pull products, theme, pixels, and Meta ads.</p></div>
+      ) : (
+        <div className="brand-grid">
+          {brands.map(b => (
+            <div key={b.domain} className="brand-card">
+              <div className="brand-card-head">
+                <Link href={`/brand/${b.domain}`}>
+                  <b>{b.store_name || b.domain}</b>
+                  <span className="mono-dim">{b.domain}</span>
+                </Link>
+                <span className={'status-pill ' + (b.status === 'done' ? 'on' : b.status === 'error' ? 'off' : '')}>
+                  {b.status === 'queued' || b.status === 'fetching'
+                    ? <span className="row-spinner" style={{ marginRight: 4 }} /> : null}
+                  {statusLabel[b.status] || b.status}
+                </span>
+              </div>
+
+              {b.status === 'done' && (
+                <>
+                  <div className="brand-stats">
+                    <span><Icon.package size={13} />{b.product_count ?? '—'} products</span>
+                    <span><Icon.megaphone size={13} />{b.fb_active_ads ?? '—'} active Meta ads</span>
+                  </div>
+                  {b.pixels?.length > 0 && (
+                    <div className="brand-pixels">
+                      {b.pixels.map(p => <span key={p} className="pixel-pill">{PIXEL_LABELS[p] || p}</span>)}
+                    </div>
+                  )}
+                  {b.contact_email && <p className="mono-dim" style={{ margin: 0 }}>{b.contact_email}</p>}
+                </>
+              )}
+              {b.status === 'error' && (
+                <p className="panel-range-err" style={{ margin: 0 }}><Icon.alert size={13} />{b.error}</p>
+              )}
+
+              <div className="brand-card-actions">
+                <a className="btn-mini" href={`https://${b.domain}`} target="_blank" rel="noreferrer" title="Open store">
+                  <Icon.link size={13} />
+                </a>
+                <button type="button" className="btn-mini" onClick={() => removeBrand(b.domain)} title="Stop tracking" aria-label="Stop tracking">
+                  <Icon.close size={13} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
   );
 }
 

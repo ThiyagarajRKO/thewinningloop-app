@@ -168,7 +168,7 @@ a.btn.btn-ghost, button.btn.btn-ghost, .btn.btn-ghost{
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:var(--s4)}
 .card{position:relative;background:var(--surface);border:1px solid var(--border);
   border-radius:var(--r);display:flex;flex-direction:column;box-shadow:var(--shadow);
-  transition:border-color var(--dur-ui) var(--ease)}
+  cursor:pointer;transition:border-color var(--dur-ui) var(--ease)}
 /* raised elevation on hover, opacity-only transition (gate 29) */
 .card::after{content:"";position:absolute;inset:-1px;border-radius:inherit;
   box-shadow:var(--shadow-raised);opacity:0;pointer-events:none;
@@ -192,6 +192,19 @@ a.btn.btn-ghost, button.btn.btn-ghost, .btn.btn-ghost{
   padding:var(--s1) var(--s2);border-radius:var(--r-pill);
   font:600 10px/1.4 var(--mono);box-shadow:var(--shadow)}
 .media-badge .ico{opacity:1}
+
+/* "Open on Facebook" — bottom-right corner so it never collides with the
+   scale badge (top-left) or the video badge (top-right, video cards only).
+   Hidden until hover/focus, same restraint as the rest of the card's badge
+   language — this is a secondary escape hatch, not a primary action. */
+.fb-badge{position:absolute;bottom:var(--s2);right:var(--s2);display:flex;
+  align-items:center;justify-content:center;width:26px;height:26px;
+  background:var(--surface);border:1px solid var(--border);color:var(--text-muted);
+  border-radius:var(--r-pill);box-shadow:var(--shadow);opacity:0;
+  transition:opacity var(--dur-ui) var(--ease),color var(--dur-ui) var(--ease),
+    border-color var(--dur-ui) var(--ease)}
+.card:hover .fb-badge,.card:focus-within .fb-badge,.fb-badge:focus-visible{opacity:1}
+.fb-badge:hover{color:var(--text);border-color:var(--primary)}
 
 .card-b{padding:var(--s3);display:flex;flex-direction:column;gap:var(--s2);flex:1}
 .card-adv{font:600 13px/1.25 var(--sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -328,6 +341,7 @@ a.btn.btn-ghost, button.btn.btn-ghost, .btn.btn-ghost{
 .detail-head{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap}
 .detail-head h1{font-size:20px;letter-spacing:-.015em;min-width:0;
   overflow-wrap:anywhere}
+.detail-head-fb{margin-left:auto}
 .status-pill{font:600 10px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;
   padding:5px var(--s2);border-radius:var(--r-pill);border:1px solid var(--border);flex:none}
 .status-pill.on{background:var(--active-fill);color:var(--text)}
@@ -338,7 +352,7 @@ a.btn.btn-ghost, button.btn.btn-ghost, .btn.btn-ghost{
 .detail-block{background:var(--surface);border:1px solid var(--border);
   border-radius:var(--r);padding:var(--s4);box-shadow:var(--shadow);
   display:flex;flex-direction:column;gap:var(--s2);min-width:0}
-.detail-block > b,.detail-block-head > b{font:600 10px/1 var(--sans);letter-spacing:.08em;
+.detail-block > b{font:600 10px/1 var(--sans);letter-spacing:.08em;
   text-transform:uppercase;color:var(--text-muted)}
 .detail-headline{font:600 15px/1.35 var(--sans);margin:0;overflow-wrap:anywhere}
 .detail-desc{font-size:13px;color:var(--text-muted);margin:0;overflow-wrap:anywhere}
@@ -349,17 +363,6 @@ a.btn.btn-ghost, button.btn.btn-ghost, .btn.btn-ghost{
 .kv{display:grid;grid-template-columns:auto 1fr;gap:var(--s2) var(--s4);margin:0}
 .kv dt{font:500 12px/1.5 var(--sans);color:var(--text-muted)}
 .kv dd{margin:0;text-align:right}
-
-/* "Open in Ad Library" — was a full-width .btn.btn-ghost sitting alone
-   under the Record block, same visual weight as a real action button for
-   something that's actually a secondary reference link. Redesigned as an
-   inline chip in the block's own header row, right-aligned next to the
-   "Record" label rather than stretching the block. */
-.detail-block-head{display:flex;align-items:center;justify-content:space-between;gap:var(--s3)}
-.ad-library-link{display:inline-flex;align-items:center;gap:5px;font:600 11px/1 var(--sans);
-  color:var(--accent-text);text-decoration:none;padding:var(--s1) 0;
-  transition:opacity var(--dur-ui) var(--ease)}
-.ad-library-link:hover{opacity:.75}
 
 .detail-siblings{margin-top:var(--s8)}
 .detail-siblings h2{font-size:15px;margin-bottom:var(--s4)}
@@ -452,6 +455,49 @@ a.btn.btn-ghost, button.btn.btn-ghost, .btn.btn-ghost{
 
 .research-intro-row{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s4);flex-wrap:wrap}
 
+/* Brand Tracker — one card per tracked store. Same surface/border/shadow
+   language as .card (the ad grid) so it reads as part of the same system. */
+.brand-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--s4)}
+.brand-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:var(--s4);box-shadow:var(--shadow);display:flex;flex-direction:column;gap:var(--s3);
+  transition:border-color var(--dur-ui) var(--ease)}
+.brand-card:hover{border-color:var(--text-muted)}
+.brand-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s3)}
+.brand-card-head b{font-size:14px;display:block}
+.brand-card-head .mono-dim{display:block;margin-top:2px}
+.brand-stats{display:flex;flex-wrap:wrap;gap:var(--s3);font:500 12px/1 var(--sans);color:var(--text-muted)}
+.brand-stats span{display:flex;align-items:center;gap:5px}
+.brand-pixels{display:flex;flex-wrap:wrap;gap:6px}
+.pixel-pill{font:600 10px/1.4 var(--mono);background:var(--bg);border:1px solid var(--border);
+  color:var(--text-muted);padding:3px var(--s2);border-radius:var(--r-pill)}
+.brand-card-actions{display:flex;gap:var(--s2);margin-top:auto;padding-top:var(--s2)}
+.brand-card-head > a{min-width:0}
+.brand-card-head > a:hover b{color:var(--accent-text)}
+
+/* Brand detail page — header + tab bar, tabs styled like the ad-detail
+   record blocks (surface card, hairline border) rather than invented anew. */
+.brand-detail-head{display:flex;justify-content:space-between;align-items:flex-start;
+  gap:var(--s3);margin-bottom:var(--s4)}
+.brand-detail-head h1{font-size:20px;letter-spacing:-.015em;margin-bottom:var(--s1)}
+
+.tab-bar{display:flex;gap:var(--s1);border-bottom:1px solid var(--border);margin-bottom:var(--s4);
+  overflow-x:auto}
+.tab-btn{display:flex;align-items:center;gap:6px;padding:var(--s2) var(--s3);
+  background:transparent;border:0;border-bottom:2px solid transparent;color:var(--text-muted);
+  font:600 13px/1.4 var(--sans);cursor:pointer;white-space:nowrap;
+  transition:color var(--dur-ui) var(--ease),border-color var(--dur-ui) var(--ease)}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--text);border-bottom-color:var(--primary)}
+.tab-count{background:var(--secondary);color:var(--text);font:600 10px/1.4 var(--mono);
+  padding:1px 6px;border-radius:var(--r-pill)}
+
+.brand-products{display:flex;flex-direction:column;gap:var(--s2)}
+.brand-product{display:flex;align-items:center;gap:var(--s3)}
+.brand-product img,.brand-product .detail-nomedia{width:44px;height:44px;border-radius:var(--r-sm);
+  object-fit:cover;flex:none;background:var(--bg)}
+.brand-product > div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.brand-product-title{font:500 13px/1.3 var(--sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
 
 /* table pagination: info bottom-left, numbered pager bottom-right */
 .table-pager{display:flex;justify-content:space-between;align-items:center;
@@ -520,6 +566,32 @@ a.btn.btn-ghost, button.btn.btn-ghost, .btn.btn-ghost{
 .panel-stat{flex:1;background:var(--bg);border:1px solid var(--border);
   border-radius:var(--r);padding:var(--s3);display:flex;flex-direction:column;gap:4px}
 
+/* Sync modal — a compact form, not a data-dense graph view, so it overrides
+   .panel-popup-modal's 920px/88vh sizing down to something that fits a
+   couple of fields without floating in a mostly-empty box. */
+.sync-modal.panel-popup-modal{width:min(420px,92vw);height:auto;max-height:88vh}
+
+
+.sync-form{display:flex;flex-direction:column;gap:var(--s2)}
+.sync-form label{font:600 11px/1 var(--sans);letter-spacing:.04em;text-transform:uppercase;
+  color:var(--text-muted);margin-top:var(--s2)}
+.sync-form label:first-of-type{margin-top:0}
+.sync-form input,.sync-form select{width:100%}
+.sync-hint{font-size:12px;line-height:1.5;color:var(--text-muted);margin:var(--s2) 0 0}
+/* .btn is inline-flex, but a flex-column parent stretches it to the full
+   420px modal width by default (align-items:stretch) — turning the normal
+   pill shape into an oversized capsule. align-self:flex-end keeps it its
+   natural auto width, same as every other .btn in the app. */
+.sync-form .btn{margin-top:var(--s3);align-self:flex-end}
+
+.sync-progress{display:flex;flex-direction:column;gap:var(--s4)}
+.sync-progress-row{display:flex;align-items:center;gap:var(--s3)}
+.sync-progress-row > div{display:flex;flex-direction:column;gap:2px}
+.sync-progress-row b{font-size:14px}
+.sync-result{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);
+  padding:var(--s3);font-size:13px;margin:0}
+.sync-actions{display:flex;gap:var(--s2);justify-content:flex-end}
+
 /* was bare flex inputs with no visual grouping — wrapped as one strip
    matching .panel-stat's existing treatment (bg/border/radius) so it reads
    as a single control, the same pattern already used two elements up */
@@ -578,8 +650,11 @@ a.btn.btn-ghost, button.btn.btn-ghost, .btn.btn-ghost{
 
 @media (max-width:520px){
   .panel-popup{width:100vw}
-  .panel-popup-modal{top:0;left:0;right:0;width:100vw;height:100dvh;
-    border-radius:0;transform:none}
+  /* .sync-modal's own width/height override (2-class selector) otherwise
+     outranks the plain .panel-popup-modal rule here despite coming later in
+     source order — matched on the same specificity so full-screen still wins. */
+  .panel-popup-modal,.sync-modal.panel-popup-modal{top:0;left:0;right:0;width:100vw;height:100dvh;
+    max-height:100dvh;border-radius:0;transform:none}
   .panel-popup-modal[data-starting-style],.panel-popup-modal[data-ending-style]{
     transform:none;opacity:0}
   .region-row{grid-template-columns:88px 1fr 28px}
