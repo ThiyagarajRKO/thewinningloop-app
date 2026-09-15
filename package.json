@@ -9,10 +9,11 @@
     "ingest": "node scripts/ingest.mjs"
   },
   "dependencies": {
+    "dotenv": "16.4.7",
     "next": "15.5.4",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
     "pg": "8.13.1",
-    "dotenv": "16.4.7"
+    "playwright": "^1.63.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
   }
 }

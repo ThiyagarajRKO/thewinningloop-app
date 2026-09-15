@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState, useCallback, useRef } from 'react';
+import Link from 'next/link';
 import './globals.css';
 import { Icon, BrandMark } from './icons';
 
@@ -97,7 +98,7 @@ function AdLibrary() {
   const [ads, setAds] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [f, setF] = useState({ q: '', domain: '', minCreatives: '', sort: 'creatives' });
+  const [f, setF] = useState({ q: '', domain: '', minCreatives: '', media: '', sort: 'creatives' });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -133,6 +134,13 @@ function AdLibrary() {
         <input id="dom" placeholder="Domain…" value={f.domain} onChange={set('domain')} style={{ width: 150 }} />
         <label htmlFor="minc" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Minimum creatives</label>
         <input id="minc" type="number" min="1" placeholder="Min creatives" value={f.minCreatives} onChange={set('minCreatives')} style={{ width: 128 }} />
+        <label htmlFor="sort" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Sort order</label>
+        <label htmlFor="media" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Media type</label>
+        <select id="media" value={f.media} onChange={set('media')}>
+          <option value="">All media</option>
+          <option value="video">Video only</option>
+          <option value="image">Image only</option>
+        </select>
         <label htmlFor="sort" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Sort order</label>
         <select id="sort" value={f.sort} onChange={set('sort')}>
           <option value="creatives">Most creatives</option>
@@ -178,9 +186,19 @@ function AdCard({ ad, i }) {
   const bars = Math.min(5, Math.max(1, Math.round(scale / 5)));
   return (
     <article className="card" data-reveal ref={ref}>
-      <a className="card-media" href={ad.ad_details_url} target="_blank" rel="noreferrer"
-         aria-label={`Open Ad Library entry for ${ad.advertiser_name || 'this advertiser'}`}>
-        {ad.creative_image
+      <Link className="card-media" href={`/ad/${ad.library_id}`}
+         aria-label={`View details for ${ad.advertiser_name || 'this advertiser'}`}
+         onMouseEnter={e => { const v = e.currentTarget.querySelector('video'); if (v) v.play().catch(() => {}); }}
+         onMouseLeave={e => { const v = e.currentTarget.querySelector('video'); if (v) { v.pause(); v.currentTime = 0; } }}>
+        {ad.creative_video ? (
+          <>
+            {/* fbcdn mp4 recovered from the raw HTML <video> tag. Poster shows until
+                hover; muted+playsInline so it can autoplay on hover without sound. */}
+            <video src={ad.creative_video} poster={ad.creative_video_poster || ad.creative_image || undefined}
+                   width="258" height="258" muted playsInline preload="none" loop />
+            <span className="media-badge" aria-label="Video ad"><Icon.play size={11} />Video</span>
+          </>
+        ) : ad.creative_image
           ? <img src={ad.creative_image} alt="" width="258" height="258" loading="lazy" />
           : <NoCreative />}
         <span className="scale-badge" title={`${scale} ads reuse this creative`}>
@@ -191,7 +209,7 @@ function AdCard({ ad, i }) {
           </span>
           {scale}×
         </span>
-      </a>
+      </Link>
       <div className="card-b">
         <h3 className="card-adv" title={ad.advertiser_name}>{ad.advertiser_name || 'Unknown advertiser'}</h3>
         {ad.body && <p className="card-body">{ad.body}</p>}

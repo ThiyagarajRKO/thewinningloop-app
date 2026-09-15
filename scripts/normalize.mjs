@@ -29,6 +29,20 @@ export function normalizeAd(raw, { query = null, country = null } = {}) {
     ads_using_creative: Number.isInteger(raw.ads_using_creative) ? raw.ads_using_creative : 1,
     cta: normCta(raw.cta),
     creative_image: raw.creative_image || null,
+    // recovered from the raw HTML <video> tag — markdown conversion drops these
+    creative_video: raw.creative_video || null,
+    creative_video_poster: raw.creative_video_poster || null,
+    media_type: raw.media_type || (raw.creative_video ? 'video' : 'image'),
+    // detail-page fields, extracted from the same grid sweep (the ?id= detail page
+    // itself returns "No ads match your search criteria" to a headless browser,
+    // so everything a detail view needs must come from the card markup)
+    headline: raw.headline || null,
+    link_description: raw.link_description || null,
+    display_domain: raw.display_domain || null,
+    status: raw.status || null,
+    video_duration_sec: Number.isInteger(raw.video_duration_sec) ? raw.video_duration_sec : null,
+    eu_transparency: raw.eu_transparency === true,
+    all_images: Array.isArray(raw.all_images) ? raw.all_images : [],
     body: raw.body || null,
     link_text: raw.link_text || null,
     landing_url: raw.landing_url || null,

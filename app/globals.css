@@ -175,6 +175,14 @@ input:focus,select:focus{outline:none;border-color:var(--primary);
   align-items:center;gap:5px;box-shadow:var(--shadow)}
 .scale-badge .bars{display:flex;align-items:flex-end;gap:1px;height:8px}
 .scale-badge .bars i{width:2px;background:var(--primary);border-radius:.5px}
+.card-media video{width:100%;height:100%;object-fit:cover;display:block}
+/* video affordance: sits opposite the scale badge so the two never collide */
+.media-badge{position:absolute;top:var(--s2);right:var(--s2);display:flex;align-items:center;
+  gap:4px;background:var(--surface);border:1px solid var(--border);color:var(--text);
+  padding:var(--s1) var(--s2);border-radius:var(--r-pill);
+  font:600 10px/1.4 var(--mono);box-shadow:var(--shadow)}
+.media-badge .ico{opacity:1}
+
 .card-b{padding:var(--s3);display:flex;flex-direction:column;gap:var(--s2);flex:1}
 .card-adv{font:600 13px/1.25 var(--sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .card-body{color:var(--text-muted);font-size:12px;line-height:1.5;
@@ -245,4 +253,62 @@ input:focus,select:focus{outline:none;border-color:var(--primary);
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
   [data-reveal]{opacity:1;transform:none}
+}
+
+
+/* ================= AD DETAIL PAGE ================= */
+.detail-shell{min-height:100dvh;background:var(--bg)}
+.detail-shell .topbar{padding:0 var(--s6);gap:var(--s3)}
+.detail-shell .content{max-width:1180px;margin:0 auto;width:100%}
+
+.detail-crumb{display:flex;align-items:center;gap:var(--s2);margin-bottom:var(--s6);
+  font:500 13px/1 var(--sans);color:var(--text-muted)}
+.detail-crumb a{color:var(--accent-text)}
+.detail-crumb a:hover{text-decoration:underline}
+.detail-crumb b{color:var(--text);font-weight:600}
+
+.detail-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:var(--s6);align-items:start}
+
+.detail-media{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.detail-media video,.detail-media img{width:100%;display:block;background:var(--bg)}
+.detail-nomedia{aspect-ratio:1;display:grid;place-items:center;color:var(--text-muted);
+  background:var(--bg)}
+.detail-thumbs{display:flex;gap:var(--s2);padding:var(--s3);border-top:1px solid var(--border);
+  overflow-x:auto}
+.detail-thumbs img{width:64px;height:64px;object-fit:cover;border-radius:var(--r-sm);
+  border:1px solid var(--border);flex:none}
+
+.detail-side{display:flex;flex-direction:column;gap:var(--s4);min-width:0}
+.detail-head{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap}
+.detail-head h1{font-size:20px;letter-spacing:-.015em;min-width:0;
+  overflow-wrap:anywhere}
+.status-pill{font:600 10px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;
+  padding:5px var(--s2);border-radius:var(--r-pill);border:1px solid var(--border);flex:none}
+.status-pill.on{background:var(--active-fill);color:var(--text)}
+.status-pill.off{background:var(--secondary);color:var(--text-muted)}
+
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:var(--s3)}
+
+.detail-block{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:var(--s4);box-shadow:var(--shadow);
+  display:flex;flex-direction:column;gap:var(--s2);min-width:0}
+.detail-block > b{font:600 10px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;
+  color:var(--text-muted)}
+.detail-headline{font:600 15px/1.35 var(--sans);margin:0;overflow-wrap:anywhere}
+.detail-desc{font-size:13px;color:var(--text-muted);margin:0;overflow-wrap:anywhere}
+.detail-body{font-size:13px;line-height:1.6;white-space:pre-wrap;margin:0;
+  max-height:340px;overflow-y:auto;overflow-wrap:anywhere}
+.mono-dim{font:500 12px/1.5 var(--mono);color:var(--text-muted);overflow-wrap:anywhere}
+
+.kv{display:grid;grid-template-columns:auto 1fr;gap:var(--s2) var(--s4);margin:0}
+.kv dt{font:500 12px/1.5 var(--sans);color:var(--text-muted)}
+.kv dd{margin:0;text-align:right}
+
+.detail-siblings{margin-top:var(--s8)}
+.detail-siblings h2{font-size:15px;margin-bottom:var(--s4)}
+
+@media (max-width:860px){
+  .detail-grid{grid-template-columns:1fr}
 }

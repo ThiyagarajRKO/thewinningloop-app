@@ -12,6 +12,9 @@ export async function GET(req) {
   if (domain) add(`landing_domain ILIKE $?`, `%${domain}%`);
   const minCreatives = parseInt(p.get('minCreatives') || '', 10);
   if (Number.isInteger(minCreatives)) add(`ads_using_creative >= $?`, minCreatives);
+  const media = (p.get('media') || '').trim();
+  if (media === 'video') where.push(`creative_video IS NOT NULL`);
+  else if (media === 'image') where.push(`creative_video IS NULL`);
   const since = (p.get('since') || '').trim();
   if (since) add(`started_running >= $?`, since);
 
@@ -25,7 +28,7 @@ export async function GET(req) {
 
   const sql = `SELECT library_id, ad_details_url, advertiser_name, advertiser_handle,
       started_running, ads_using_creative, cta, creative_image, body, link_text,
-      landing_url, landing_domain
+      landing_url, landing_domain, creative_video, creative_video_poster, media_type
     FROM ads ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
     ORDER BY ${order} LIMIT ${limit}`;
   const { rows } = await pool.query(sql, vals);

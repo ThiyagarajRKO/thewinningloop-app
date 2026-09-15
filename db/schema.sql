@@ -17,6 +17,16 @@ CREATE TABLE IF NOT EXISTS ads (
   ads_using_creative INT  NOT NULL DEFAULT 1, -- observed 1..23
   cta                TEXT,                    -- null ~78%; case-folded on ingest
   creative_image     TEXT,
+  creative_video     TEXT,                    -- mp4 src recovered from raw HTML (<video> tag)
+  creative_video_poster TEXT,                 -- video thumbnail
+  media_type         TEXT,                    -- 'video' | 'image'
+  headline           TEXT,                    -- link-card headline under the creative
+  link_description   TEXT,                    -- link-card description line
+  display_domain     TEXT,                    -- SHOUTED.DOMAIN shown on the card
+  status             TEXT,                    -- 'Active' | 'Inactive'
+  video_duration_sec INT,                     -- parsed from the player timecode
+  eu_transparency    BOOLEAN DEFAULT false,   -- EU transparency block present
+  all_images         TEXT[] DEFAULT '{}',     -- every creative image on the card
   body               TEXT,                    -- parser caps at 2000 chars
   link_text          TEXT,                    -- sparse: 9/120
   landing_url        TEXT,

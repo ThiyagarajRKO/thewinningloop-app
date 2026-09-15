@@ -4,3 +4,4 @@ node_modules/
 .env.bak
 payloads/
 dev.log
+backups/
