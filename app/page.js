@@ -9,7 +9,6 @@ import { Icon, BrandMark } from './icons';
    never a fake table of invented numbers. */
 const NAV = [
   { group: 'Ad intelligence', items: [
-    { id: 'research',  label: 'Keyword Research', icon: 'search', live: true },
     { id: 'fb',        label: 'Facebook Adlibrary', icon: 'megaphone', live: true },
     { id: 'tiktok',    label: 'TikTok Adspy',       icon: 'music',
       need: 'Blocked on both routes. The API is research-only (academic/non-profit, EU data only; commercial users explicitly ineligible). And library.tiktok.com/robots.txt disallows /ads, /api and /other-commercial-content by name, plus a blanket Disallow: / — so a scraper is not a legitimate workaround. Licensed resellers (Apify and similar) are the remaining option.' },
@@ -21,10 +20,9 @@ const NAV = [
   { group: 'Product research', items: [
     { id: 'stores',   label: 'Store Explorer',   icon: 'store',    live: true },
     { id: 'magic',    label: 'Magic AI',         icon: 'sparkles', live: true },
+    { id: 'gtrends',  label: 'Google Trends',    icon: 'trending', live: true },
     { id: 'tracker',  label: 'Store Tracker',    icon: 'chart',
       need: 'Needs repeat polling of each store over time. Public /products.json works on some stores (corecareshop.com returns 200) but not all (niraloom.com returns 503), so the worker needs per-store fallbacks and a scheduler.' },
-    { id: 'trends',   label: 'Exploding Trends', icon: 'trending',
-      need: 'Needs a time series per product. We hold one snapshot per sweep — run sweeps on a schedule first, then this becomes real.' },
     { id: 'reverse',  label: 'AI Reverse Ad Search', icon: 'search',
       need: 'pgvector 0.8.6 is already available on this Postgres. What is missing is an embedding model to vectorise the 228 stored creatives, plus a vector column and index. This is the closest blocked feature to done.' },
   ]},
@@ -40,7 +38,7 @@ const fmt = n => new Intl.NumberFormat('en-US').format(n ?? 0);
 const fmtDate = d => d ? new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' }).format(new Date(d)) : '';
 
 export default function App() {
-  const [view, setView] = useState('research');
+  const [view, setView] = useState('magic');
   const current = ALL.find(i => i.id === view);
 
   return (
@@ -76,10 +74,10 @@ export default function App() {
           <div className="topbar-right"><SweepMeta /><ThemeToggle /></div>
         </header>
         <main className="content">
-          {view === 'research' && <KeywordResearch onOpenLibrary={() => setView('fb')} />}
           {view === 'fb' && <AdLibrary />}
           {view === 'stores' && <Stores mode="explorer" />}
-          {view === 'magic' && <Stores mode="saturation" />}
+          {view === 'magic' && <MagicAI onOpenLibrary={() => setView('fb')} />}
+          {view === 'gtrends' && <TrendsPage />}
           {view === 'boards' && <Boards />}
           {!current?.live && <NotConnected item={current} />}
         </main>
@@ -95,10 +93,9 @@ function SweepMeta() {
   return <span className="sweep-meta">{fmt(s.stats.ads)} ads · {fmt(s.stats.domains)} stores</span>;
 }
 
-/* Google Trends for the current search phrase — one fetch per query, cached
-   server-side 6h. Shows "unavailable" honestly rather than a fake chart when
-   no snapshot exists yet for this term (snapshots are seeded by the assistant
-   session via the google-trends MCP tool; this app has no direct MCP access). */
+/* Google Trends for the current search phrase — one LIVE fetch per query
+   (lib/trends-client.mjs calls trends.google.com directly, no MCP, no Claude
+   session required), cached 30m server-side so re-rendering doesn't refetch. */
 function TrendsCard({ term }) {
   const [data, setData] = useState(null);
   const q = term.trim();
@@ -149,8 +146,8 @@ function TrendsCard({ term }) {
   );
 }
 
-/* ---------- Keyword Research: one keyword in, ads + demand out ---------- */
-function KeywordResearch({ onOpenLibrary }) {
+/* ---------- Magic AI: one keyword in, ads + demand out ---------- */
+function MagicAI({ onOpenLibrary }) {
   const [q, setQ] = useState('');
   const [submitted, setSubmitted] = useState('');
   const [ads, setAds] = useState(null);
@@ -180,7 +177,7 @@ function KeywordResearch({ onOpenLibrary }) {
   return (
     <>
       <div className="research-intro">
-        <h1>Keyword Research</h1>
+        <h1>Magic AI</h1>
         <p>Type a product idea. See who is running ads for it and how the market is trending.</p>
       </div>
 
@@ -500,6 +497,129 @@ function TableSkeleton() {
     <div className="sk" aria-busy="true" aria-label="Loading stores" style={{ padding: 'var(--s4)' }}>
       {Array.from({ length: 8 }, (_, i) => <div className="sk-line" key={i} style={{ margin: '14px 0' }} />)}
     </div>
+  );
+}
+
+/* ---------- Google Trends: standalone lookup, live fetch, any term ---------- */
+const TREND_GEOS = [
+  { v: '', label: 'Worldwide' }, { v: 'US', label: 'United States' },
+  { v: 'GB', label: 'United Kingdom' }, { v: 'IN', label: 'India' },
+  { v: 'AU', label: 'Australia' }, { v: 'CA', label: 'Canada' },
+];
+const TREND_TIMEFRAMES = [
+  { v: 'now 7-d', label: 'Past 7 days' }, { v: 'today 1-m', label: 'Past month' },
+  { v: 'today 3-m', label: 'Past 3 months' }, { v: 'today 12-m', label: 'Past 12 months' },
+];
+
+function TrendsPage() {
+  const [q, setQ] = useState('');
+  const [geo, setGeo] = useState('');
+  const [timeframe, setTimeframe] = useState('today 3-m');
+  const [term, setTerm] = useState('');
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState(null);
+
+  const run = async (t, g, tf) => {
+    setLoading(true); setErr(null); setTerm(t);
+    const p = new URLSearchParams({ q: t, geo: g, timeframe: tf });
+    const d = await fetch('/api/trends?' + p).then(r => r.json()).catch(() => null);
+    if (!d) { setErr('Request failed.'); setData(null); }
+    else if (!d.available) { setErr(d.note || d.error || 'No data available.'); setData(null); }
+    else { setData(d); setErr(null); }
+    setLoading(false);
+  };
+
+  const onSubmit = e => { e.preventDefault(); if (q.trim()) run(q.trim(), geo, timeframe); };
+
+  const pts = data?.points || [];
+  const max = Math.max(1, ...pts.map(p => p.value));
+  const first = pts[0]?.value ?? 0, last = pts[pts.length - 1]?.value ?? 0;
+  const delta = first > 0 ? Math.round(((last - first) / first) * 100) : 0;
+  const peak = pts.reduce((a, p) => (p.value > (a?.value ?? -1) ? p : a), null);
+
+  return (
+    <>
+      <div className="research-intro">
+        <h1>Google Trends</h1>
+        <p>Live search-interest data, fetched directly from Google on every request — no pre-seeded cache required.</p>
+      </div>
+
+      <form className="filters research-form" onSubmit={onSubmit} role="search">
+        <div className="field" style={{ flex: 1, minWidth: 220 }}>
+          <Icon.trending />
+          <label htmlFor="tq" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Search term</label>
+          <input id="tq" placeholder="e.g. air fryer, cold plunge…" value={q}
+                 onChange={e => setQ(e.target.value)} style={{ width: '100%' }} autoFocus />
+        </div>
+        <label htmlFor="tgeo" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Region</label>
+        <select id="tgeo" value={geo} onChange={e => setGeo(e.target.value)}>
+          {TREND_GEOS.map(g => <option key={g.v} value={g.v}>{g.label}</option>)}
+        </select>
+        <label htmlFor="ttf" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Timeframe</label>
+        <select id="ttf" value={timeframe} onChange={e => setTimeframe(e.target.value)}>
+          {TREND_TIMEFRAMES.map(t => <option key={t.v} value={t.v}>{t.label}</option>)}
+        </select>
+        <button className="btn" type="submit" disabled={loading || !q.trim()}>
+          {loading ? 'Fetching…' : 'Check trend'}
+        </button>
+      </form>
+
+      {!term && (
+        <div className="empty">
+          <EmptyGlyph />
+          <h2>Search any term</h2>
+          <p>Fetches directly from Google Trends — works for anything, not just terms already in your ad index.</p>
+        </div>
+      )}
+
+      {term && loading && (
+        <div className="sk" aria-busy="true" style={{ padding: 'var(--s6)' }}>
+          <div className="sk-line" /><div className="sk-line short" />
+        </div>
+      )}
+
+      {term && !loading && err && (
+        <div className="empty">
+          <EmptyGlyph />
+          <h2>Couldn&apos;t fetch &quot;{term}&quot;</h2>
+          <p>{err}</p>
+        </div>
+      )}
+
+      {term && !loading && !err && data && (
+        <>
+          <div className="kpis">
+            <Kpi label="Avg interest" value={data.avg_interest} hint="0-100 scale" />
+            <Kpi label="Latest" value={last} />
+            <Kpi label="Peak" value={peak?.value ?? '—'} hint={peak?.date} />
+            <Kpi label="Change" value={`${delta >= 0 ? '+' : ''}${delta}%`} hint="over period" />
+          </div>
+
+          <div className="trends-card">
+            <div className="trends-head">
+              <Icon.trending size={16} />
+              <span className="trends-title">
+                &quot;{data.term}&quot; · {data.geo === 'worldwide' ? 'Worldwide' : data.geo} · {timeframe}
+              </span>
+              <span className={'trends-delta ' + (delta >= 0 ? 'up' : 'down')}>
+                {delta >= 0 ? '+' : ''}{delta}%
+              </span>
+            </div>
+            <div className="trends-spark trends-spark-lg" aria-hidden="true">
+              {pts.map((p, i) => (
+                <i key={i} style={{ height: `${Math.max(4, (p.value / max) * 100)}%` }} title={`${p.date}: ${p.value}`} />
+              ))}
+            </div>
+            <div className="trends-foot">
+              <span>{data.source === 'live' ? 'Live from Google' : data.source === 'cache-fallback' ? 'Cached (live fetch failed)' : 'Cached'}</span>
+              <span className="mono-dim">{pts.length} data points</span>
+            </div>
+            {data.note && <p className="detail-desc" style={{ margin: 0 }}>{data.note}</p>}
+          </div>
+        </>
+      )}
+    </>
   );
 }
 

@@ -336,3 +336,5 @@ input:focus,select:focus{outline:none;border-color:var(--primary);
 .research-intro h1{font-size:19px;letter-spacing:-.015em;margin-bottom:var(--s1)}
 .research-intro p{color:var(--text-muted);font-size:13px;margin:0}
 .research-form{margin-bottom:var(--s6)}
+
+.trends-spark-lg{height:80px}
