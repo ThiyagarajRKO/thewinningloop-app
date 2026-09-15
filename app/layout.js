@@ -20,7 +20,12 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <script dangerouslySetInnerHTML={{ __html: NO_FLASH }} />
       </head>
-      <body>{children}</body>
+      {/* suppressHydrationWarning: browser extensions (ColorZilla, Grammarly,
+          etc.) inject attributes like cz-shortcut-listen onto <body> before
+          React hydrates. React flags that as a mismatch even though it's not
+          a real one — this is Next's own documented fix for exactly that
+          false positive, not a workaround for an actual bug here. */}
+      <body suppressHydrationWarning>{children}</body>
     </html>
   );
 }
