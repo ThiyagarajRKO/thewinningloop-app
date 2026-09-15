@@ -92,6 +92,47 @@
         "restraint": 4,
         "variety": 3
       }
+    },
+    {
+      "date": "2026-09-15",
+      "surface": "app-shell",
+      "note": "Extended the trend detail panel: expand-to-modal (one Dialog instance, class swap between drawer/modal, not a second dialog), a real date-range re-fetch against Google's own custom-range timeframe format, and a regional breakdown (interestByRegion, ported earlier this session but unwired until now).",
+      "change": "panel expand icon -> same Dialog, .panel-popup-modal variant (centered, scale-based enter). Date range -> /api/trends/daily/detail now accepts from/to, verified live against trends.google.com's 'YYYY-MM-DD YYYY-MM-DD' format before building UI around it. New /api/trends/daily/regions route.",
+      "contrast_catch": "Initial error-text draft used --primary as a text color on --bg \u2014 only UI-safe (4.21-4.37), not text-safe, and semantically wrong anyway (primary reads as brand/active elsewhere in the shell, not error). Fixed: text/bg (already text-safe, 16.50/17.26) + an alert icon carries the severity instead of inventing a color the lock never defined.",
+      "motion": {
+        "track": "app-shell",
+        "used": [
+          "modal enter/exit via scale+opacity (Base UI data-starting-style/data-ending-style), same --dur-panel token as the drawer",
+          "region bars: static width, no entrance animation added (would be decorative, not explained)"
+        ],
+        "reason": "Expand is still a panel-family transition, not a new track. Drawer<->modal never runs both transforms simultaneously \u2014 modal state resets translateX to its own centered transform before the scale animation begins, so gate 29 (transform/opacity only, no conflicting simultaneous transforms) holds."
+      },
+      "critique": {
+        "show_dont_tell": 4,
+        "philosophy": 4,
+        "hierarchy": 4,
+        "specificity": 4,
+        "restraint": 4,
+        "variety": 3
+      }
+    },
+    {
+      "date": "2026-09-15",
+      "surface": "app-shell",
+      "note": "Five fixes to the trend search/detail flow: debounced search (removed submit button), restyled the date-range strip to match panel-stat's card treatment, fixed a real chart bug (YAxis labels clipped by a stray negative margin fighting the axis's own width), made the advertiser count a real drill-down into matching ads via the existing /api/ads route, relocated the page-size control.",
+      "bugs_found_and_fixed": [
+        "YAxis clipping: margin.left=-16 was fighting YAxis width=28, pushing axis labels off the chart's left edge entirely \u2014 not a style nitpick, the numbers were invisible",
+        "toggleExpanded/openExpanded: the expand button called setExpanded directly, bypassing the function that actually fetched regional data \u2014 regions never loaded on expand despite the code existing"
+      ],
+      "new_capability": "Advertiser count in the panel is now clickable (only when >0) and opens a real list of matching ads (advertiser, thumbnail, landing domain, link to /ad/[id]) via /api/ads?q=<term> \u2014 the same search-everywhere query lib/market.mjs already uses to produce the count, so the number and the list are guaranteed consistent.",
+      "critique": {
+        "show_dont_tell": 4,
+        "philosophy": 4,
+        "hierarchy": 3,
+        "specificity": 4,
+        "restraint": 4,
+        "variety": 3
+      }
     }
   ]
 }

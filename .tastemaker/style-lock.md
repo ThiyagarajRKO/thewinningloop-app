@@ -153,6 +153,29 @@ they're framework-agnostic, unstyled component libraries:
   fine per that same rule — it's a decorative trend indicator, not a chart someone reads
   values off of. The panel's `AreaChart` has real axes, gridlines, and a tooltip.
 
+## Trend detail panel — expand, date range, regions
+- **Expand**: one `Dialog.Root` throughout; expand toggles `.panel-popup-modal` on the
+  same Popup rather than mounting a second dialog. Drawer motion is `translateX`, modal
+  motion is `scale` — both transform-only (gate 29), never simultaneous.
+- **Date range**: `/api/trends/daily/detail` accepts `from`/`to` (`YYYY-MM-DD`), converted
+  to Google's own custom-range timeframe string. Verified live against the real endpoint
+  before building the UI around it (not assumed from docs) — 41 real points for a
+  2026-08-01..2026-09-10 range. State lives inside `TrendDetailPanel`, keyed to `row.query`
+  so it resets per-row rather than leaking across a different term.
+- **Regions**: new `/api/trends/daily/regions`, wired to `interestByRegion()` — ported from
+  the MCP source earlier in the project but never called from a route until this pass.
+  Verified live (51 US states for a real term) before wiring. Only rendered when expanded.
+
+## Contrast catch (Step 4 rule 5, worked correctly)
+Draft error text used `--primary` on `--bg` — that pairing is UI-safe (4.21/4.37) in the
+Color contract, not text-safe (needs 4.5), and using it for body-size error text would
+have shipped a failing pairing. It was also the wrong choice semantically: `primary` reads
+as brand/active state everywhere else in the shell (active nav pill, buttons, chart line),
+so using it for an error would have been misleading even if the numbers had passed.
+No dedicated error hue exists in this palette — inventing one wasn't warranted for one
+inline validation message. Fixed by reusing `text` on `bg` (already text-safe, 16.50/17.26)
+and moving the severity signal to an alert icon instead of a color.
+
 ## Scan dispositions (recorded, not silently ignored)
 - `viewport-height` HIGH x2 — **fixed**: `.shell` and `.sidebar` now use `100dvh`.
 - `missing-alt` HIGH at icons.js:2 — **false positive**: line 2 is a comment. Every inline `<svg>` sets

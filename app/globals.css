@@ -362,7 +362,7 @@ input:focus,select:focus{outline:none;border-color:var(--primary);
   padding:3px var(--s2);border-radius:var(--r-pill);flex:none}
 
 
-.daily-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s4);flex-wrap:wrap}
+.daily-head{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap;margin-bottom:var(--s3)}
 .daily-row{cursor:pointer}
 .daily-row:hover{background:var(--secondary)}
 .daily-row:focus-visible{outline:2px solid var(--primary);outline-offset:-2px}
@@ -407,12 +407,29 @@ input:focus,select:focus{outline:none;border-color:var(--primary);
   background:var(--surface);border-left:1px solid var(--border);
   box-shadow:var(--shadow-raised);z-index:41;display:flex;flex-direction:column;
   overflow-y:auto;padding:var(--s6);gap:var(--s4);
-  transform:translateX(0);transition:transform var(--dur-panel) var(--ease);
+  transform:translateX(0);transition:transform var(--dur-panel) var(--ease),
+    top var(--dur-panel) var(--ease),right var(--dur-panel) var(--ease),
+    width var(--dur-panel) var(--ease),height var(--dur-panel) var(--ease),
+    border-radius var(--dur-panel) var(--ease);
   outline:none}
 .panel-popup[data-starting-style]{transform:translateX(100%)}
 .panel-popup[data-ending-style]{transform:translateX(100%)}
 
+/* Expand: same Dialog instance, same Popup element — this class just
+   changes it from a right-edge drawer to a centered, near-fullscreen modal
+   "to experience the graph fully". Still transform/opacity-only motion
+   (gate 29): the drawer's translateX and the modal's scale never run at the
+   same time, since expanding always starts from the drawer's own resting
+   state (translateX(0)), so there is no conflicting transform mid-transition. */
+.panel-popup-modal{top:50%;left:50%;right:auto;
+  width:min(920px,92vw);height:min(88vh,820px);
+  border-left:1px solid var(--border);border-radius:var(--r);
+  transform:translate(-50%,-50%)}
+.panel-popup-modal[data-starting-style]{transform:translate(-50%,-50%) scale(.96);opacity:0}
+.panel-popup-modal[data-ending-style]{transform:translate(-50%,-50%) scale(.96);opacity:0}
+
 .panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s3)}
+.panel-head-actions{display:flex;gap:var(--s2);flex:none}
 .panel-title{font-size:17px;letter-spacing:-.01em;margin-top:2px;overflow-wrap:anywhere}
 .panel-close{flex:none;display:flex;align-items:center;justify-content:center;
   width:32px;height:32px;background:transparent;border:1px solid var(--border);
@@ -424,11 +441,46 @@ input:focus,select:focus{outline:none;border-color:var(--primary);
 .panel-stat{flex:1;background:var(--bg);border:1px solid var(--border);
   border-radius:var(--r);padding:var(--s3);display:flex;flex-direction:column;gap:4px}
 
+/* was bare flex inputs with no visual grouping — wrapped as one strip
+   matching .panel-stat's existing treatment (bg/border/radius) so it reads
+   as a single control, the same pattern already used two elements up */
+.panel-range{display:flex;align-items:flex-end;gap:var(--s3);flex-wrap:wrap;
+  background:var(--bg);border:1px solid var(--border);border-radius:var(--r);
+  padding:var(--s3)}
+.panel-range label{display:flex;flex-direction:column;gap:4px;font-size:10px;
+  letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted)}
+.panel-range input[type="date"]{padding:7px var(--s2);font-size:12px;color-scheme:light dark;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm)}
+.panel-range .btn{margin-left:auto}
+/* no dedicated error hue in the lock — text/bg is already verified text-safe
+   (16.50/17.26), so severity is carried by the alert icon, not by color */
+.panel-range-err{display:flex;align-items:center;gap:6px;margin:0;font-size:12px;color:var(--text)}
+
 .panel-chart-wrap{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);
   padding:var(--s3);min-height:260px;display:flex;align-items:center;justify-content:center}
+.panel-chart-wrap-lg{min-height:420px}
 .panel-chart-loading{display:flex;flex-direction:column;align-items:center;gap:var(--s3)}
 
 .panel-block{display:flex;flex-direction:column;gap:var(--s2)}
+
+.panel-stat-clickable{cursor:pointer;text-align:left;transition:border-color var(--dur-ui) var(--ease)}
+.panel-stat-clickable:hover{border-color:var(--primary)}
+
+.panel-ads-list{display:flex;flex-direction:column;gap:4px}
+.panel-ad-row{display:flex;align-items:center;gap:var(--s2);padding:var(--s2);
+  border-radius:var(--r-sm);transition:background-color var(--dur-ui) var(--ease)}
+.panel-ad-row:hover{background:var(--secondary)}
+.panel-ad-row img{border-radius:var(--r-sm);object-fit:cover;flex:none;background:var(--border)}
+.panel-ad-thumb-empty{width:36px;height:36px;border-radius:var(--r-sm);background:var(--border);flex:none}
+.panel-ad-info{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.panel-ad-adv{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.region-list{display:flex;flex-direction:column;gap:6px}
+.region-row{display:grid;grid-template-columns:120px 1fr 32px;align-items:center;gap:var(--s2)}
+.region-name{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.region-bar-track{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.region-bar{height:100%;background:var(--primary);border-radius:3px}
+.region-value{text-align:right;font-size:11px}
 
 .chart-tooltip{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);
   padding:var(--s2) var(--s3);box-shadow:var(--shadow-raised);display:flex;flex-direction:column;gap:2px;
@@ -442,8 +494,14 @@ input:focus,select:focus{outline:none;border-color:var(--primary);
   border:2px solid var(--border);border-top-color:var(--primary);
   animation:spin .7s linear infinite}
 .row-spinner-lg{width:22px;height:22px;border-width:3px}
+.field-spinner{position:absolute;right:var(--s3);top:50%;transform:translateY(-50%)}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 @media (max-width:520px){
   .panel-popup{width:100vw}
+  .panel-popup-modal{top:0;left:0;right:0;width:100vw;height:100dvh;
+    border-radius:0;transform:none}
+  .panel-popup-modal[data-starting-style],.panel-popup-modal[data-ending-style]{
+    transform:none;opacity:0}
+  .region-row{grid-template-columns:88px 1fr 28px}
 }

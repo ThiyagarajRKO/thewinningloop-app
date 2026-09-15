@@ -35,6 +35,8 @@ export const Icon = {
   play: p => <Svg {...p}><path d="M6 4l14 8-14 8z" fill="currentColor" stroke="none" /></Svg>,
   link: p => <Svg {...p}><path d="M15 3h6v6" /><path d="M10 14 21 3" /><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /></Svg>,
   close: p => <Svg {...p}><path d="M18 6 6 18M6 6l12 12" /></Svg>,
+  expand: p => <Svg {...p}><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></Svg>,
+  shrink: p => <Svg {...p}><path d="M9 3v6H3M15 21v-6h6M21 3l-6 6M3 21l6-6" /></Svg>,
 };
 
 // Brand mark: two offset bars reading as a rising signal, inside a hexagonal aperture.

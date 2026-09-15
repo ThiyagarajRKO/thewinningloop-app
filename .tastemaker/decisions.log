@@ -17,3 +17,19 @@
 2026-09-15  pending-review  surface=app-shell  axis=motion
   Kept skeleton shimmer at 1.4s despite the 300ms UI budget (audit MEDIUM).
   Reason: continuous loading affordance, not a state transition; reduced-motion gated.
+
+2026-09-15  pending-review  surface=app-shell  axis=behavioral-primitive
+  Added @base-ui/react (Dialog, 1.8.0) and recharts (3.10.1) to a project that previously
+  hand-rolled every interaction — first real dependency addition beyond next/react/pg.
+  Reason: library-selection.md names both as the default for exactly this case (dismissible
+  overlay, real chart); "never hand-roll a chart" is explicit. Caught @base-ui-components/react
+  (the package I installed first) as deprecated mid-install, switched to @base-ui/react.
+  Needs user confirmation this dependency addition is wanted, not just skill-compliant.
+
+2026-09-15  pending-review  surface=app-shell  axis=contrast
+  Caught --primary-on-error-text as a real contrast violation (UI-safe 4.21-4.37, not
+  text-safe) before shipping — fixed to text/bg + an icon instead of inventing an error
+  color the palette doesn't have. Flagging because "no dedicated error hue" is a real gap
+  in the lock, not just this one instance's fix — worth deciding once if the project wants
+  a real error/danger token added to the Color contract, rather than working around its
+  absence ad hoc each time an error state comes up.

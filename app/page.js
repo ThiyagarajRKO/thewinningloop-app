@@ -589,6 +589,9 @@ function TrendsPage() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState(null);
+  // true when Trending Now was asked for "Worldwide" but got the US list
+  // instead (see loadTrending) — surfaced honestly rather than silently swapped
+  const [wasGlobalFallback, setWasGlobalFallback] = useState(false);
 
   // search mode additionally carries the searched term's own timeseries +
   // market verdict for the header card, kept from the original design
@@ -612,6 +615,13 @@ function TrendsPage() {
   const loadTrending = async g => {
     setLoading(true); setErr(null); setMode('trending'); setTerm(''); setTermData(null);
     resetPaging();
+    // Verified live: Google's trending RSS feed has no worldwide edition —
+    // an empty geo returns byte-identical results to geo=US (same 10
+    // headlines, same order), it's a silent server-side default, not real
+    // aggregation. So this coerces to US same as before, but wasGlobalFallback
+    // records that it happened so the UI can say so instead of pretending
+    // "Worldwide" genuinely applied here the way it does for search/regions.
+    setWasGlobalFallback(!g);
     const d = await fetch(`/api/trends/daily?geo=${g || 'US'}`).then(r => r.json()).catch(() => null);
     if (!d?.available) { setErr(d?.error || 'Trending unavailable right now.'); setRows([]); }
     else { setRows(toTrendingRows(d.items)); setErr(null); }
@@ -638,7 +648,20 @@ function TrendsPage() {
     setLoading(false);
   };
 
-  const onSubmit = e => { e.preventDefault(); if (q.trim()) runSearch(q.trim(), geo, timeframe); };
+  // Debounced search — no button, no Enter needed. Waits 450ms after the
+  // user stops typing before firing, so a normal typing cadence never sends
+  // a request per keystroke. Clearing the box back to empty drops mode back
+  // to idle rather than showing a stale error for an empty query.
+  useEffect(() => {
+    const term = q.trim();
+    if (!term) {
+      if (mode === 'search') { setMode('idle'); setRows([]); setErr(null); setTerm(''); setTermData(null); }
+      return;
+    }
+    const t = setTimeout(() => runSearch(term, geo, timeframe), 450);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, geo, timeframe]);
 
   // Opens the panel immediately with what we already have (row.query,
   // row.articles, row.advertisers), then fetches the timeseries in the
@@ -687,25 +710,32 @@ function TrendsPage() {
         )}
       </div>
 
-      <form className="filters research-form" onSubmit={onSubmit} role="search">
+      {/* No submit button — debounced (450ms after typing stops), fires
+          automatically. The field itself shows the in-flight state. */}
+      <div className="filters research-form" role="search">
         <div className="field" style={{ flex: 1, minWidth: 220 }}>
           <Icon.search />
           <label htmlFor="tq" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Search term</label>
           <input id="tq" placeholder="Search any term — e.g. air fryer, cold plunge…" value={q}
                  onChange={e => setQ(e.target.value)} style={{ width: '100%' }} autoFocus />
+          {loading && mode === 'search' && <span className="row-spinner field-spinner" aria-label="Searching" />}
         </div>
         <label htmlFor="tgeo" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Region</label>
         <select id="tgeo" value={geo} onChange={e => { setGeo(e.target.value); if (mode === 'trending') loadTrending(e.target.value); }}>
-          {TREND_GEOS.filter(g => g.v).map(g => <option key={g.v} value={g.v}>{g.label}</option>)}
+          {/* Worldwide (empty geo) is genuine for search + regions — verified
+              live: 93 real points and different values than a US-only run.
+              Trending Now is the one exception (see loadTrending) — Google's
+              trending RSS feed has no worldwide edition; empty geo there
+              silently returns the same list as US, which this option would
+              misrepresent if hidden without explanation instead of shown
+              with one. */}
+          {TREND_GEOS.map(g => <option key={g.v} value={g.v}>{g.label}</option>)}
         </select>
         <label htmlFor="ttf" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Timeframe</label>
         <select id="ttf" value={timeframe} onChange={e => setTimeframe(e.target.value)}>
           {TREND_TIMEFRAMES.map(t => <option key={t.v} value={t.v}>{t.label}</option>)}
         </select>
-        <button className="btn" type="submit" disabled={loading || !q.trim()}>
-          {loading && mode === 'search' ? 'Searching…' : 'Search'}
-        </button>
-      </form>
+      </div>
 
       {mode === 'search' && termData && !loading && (
         <div className="trends-card">
@@ -740,7 +770,21 @@ function TrendsPage() {
       {mode !== 'idle' && (
         <div className="daily-head" style={{ marginTop: mode === 'search' ? 'var(--s4)' : 0 }}>
           <h2>{mode === 'trending' ? 'Trending shopping today' : `Related to "${term}"`}</h2>
+          {!loading && !err && rows.length > 0 && (
+            <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(0); }}
+              className="page-size-select" aria-label="Rows per page" style={{ marginLeft: 'auto' }}>
+              {PAGE_SIZES.map(n => <option key={n} value={n}>{n} / page</option>)}
+            </select>
+          )}
         </div>
+      )}
+
+      {mode === 'trending' && wasGlobalFallback && !loading && (
+        <p className="panel-range-err" style={{ marginBottom: 'var(--s3)' }}>
+          <Icon.alert size={13} />
+          Google&apos;s trending feed has no worldwide edition — showing United States, the
+          same list &quot;Worldwide&quot; would silently fall back to here.
+        </p>
       )}
 
       {mode === 'idle' ? (
@@ -787,16 +831,13 @@ function TrendsPage() {
           <div className="table-pager">
             <div className="table-pager-info">
               <span className="mono-dim">Showing {rangeStart}–{rangeEnd} of {rows.length}</span>
-              <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(0); }} className="page-size-select">
-                {PAGE_SIZES.map(n => <option key={n} value={n}>{n} / page</option>)}
-              </select>
             </div>
             <PageNumbers page={page} pageCount={pageCount} onChange={setPage} />
           </div>
         </>
       )}
 
-      <TrendDetailPanel row={panelRow} loading={panelLoading}
+      <TrendDetailPanel row={panelRow} loading={panelLoading} geo={geo}
         detail={panelRow ? rowDetail[panelRow.query] : null} onClose={closePanel} />
     </>
   );
@@ -822,20 +863,94 @@ function TrendRow({ row, isOpen, isLoading, onOpen }) {
 // with what the row already had (query, articles, advertisers) and shows
 // the chart's own loading state independently, so the panel is never just
 // a blank wait.
-function TrendDetailPanel({ row, loading, detail, onClose }) {
-  const chartData = (detail?.points || []).map(p => ({
-    // shorten "Sep 15, 2026 at 4:00 AM" -> "Sep 15, 4AM" so hourly ticks
-    // don't collide on a panel-width axis
-    label: p.date.replace(/, \d{4} at (\d{1,2}):00 ([AP]M)/, ', $1$2').replace(', ', ' '),
+// today, in the trends.google.com custom-range format the endpoint actually
+// accepts (verified live: "YYYY-MM-DD YYYY-MM-DD" — see the detail route)
+function isoDate(d) { return d.toISOString().slice(0, 10); }
+function daysAgo(n) { const d = new Date(); d.setDate(d.getDate() - n); return isoDate(d); }
+
+function TrendDetailPanel({ row, loading, detail, geo, onClose }) {
+  // One Dialog instance throughout — expand toggles which CSS class the
+  // Popup renders with (drawer vs. centered modal) rather than mounting a
+  // second dialog, so there is one focus trap and one set of dismiss
+  // handlers regardless of size.
+  const [expanded, setExpanded] = useState(false);
+
+  // Date range is local to the panel: it resets naturally whenever `row`
+  // changes (a different query opens) because the key below remounts this
+  // component instead of carrying stale range state across rows.
+  const [from, setFrom] = useState(daysAgo(7));
+  const [to, setTo] = useState(daysAgo(0));
+  const [rangeData, setRangeData] = useState(null); // null = still on the default 7-day `detail` prop
+  const [rangeLoading, setRangeLoading] = useState(false);
+  const [rangeErr, setRangeErr] = useState(null);
+
+  // Regions only fetched once, on first expand — no point paying for it on
+  // every panel open when most opens never expand.
+  const [regions, setRegions] = useState(null);
+  const [regionsLoading, setRegionsLoading] = useState(false);
+
+  const active = rangeData ?? detail; // whichever window is currently shown
+  const isLoadingChart = rangeData === null && loading ? loading : rangeLoading;
+
+  const applyRange = async () => {
+    if (!row) return;
+    setRangeLoading(true); setRangeErr(null);
+    const d = await fetch(`/api/trends/daily/detail?${new URLSearchParams({ q: row.query, geo, from, to })}`)
+      .then(r => r.json()).catch(() => ({ available: false, error: 'Request failed.' }));
+    if (!d.available) setRangeErr(d.error || 'No data for this range.');
+    setRangeData(d);
+    setRangeLoading(false);
+  };
+
+  const toggleExpanded = () => {
+    const next = !expanded;
+    setExpanded(next);
+    if (next && !regions && row) {
+      setRegionsLoading(true);
+      fetch(`/api/trends/daily/regions?${new URLSearchParams({ q: row.query, geo })}`)
+        .then(r => r.json()).then(setRegions).catch(() => setRegions({ available: false }))
+        .finally(() => setRegionsLoading(false));
+    }
+  };
+
+  // "1 advertiser" with nowhere to go was the gap — this fetches the actual
+  // matching ads from the same search-everywhere query /api/ads already
+  // runs (identical to what lib/market.mjs counted), so the number becomes
+  // a real, clickable list instead of a dead end. Loaded on demand, not on
+  // panel open, since most opens never need it.
+  const [ads, setAds] = useState(null);
+  const [adsLoading, setAdsLoading] = useState(false);
+  const [adsOpen, setAdsOpen] = useState(false);
+  const toggleAds = () => {
+    const next = !adsOpen;
+    setAdsOpen(next);
+    if (next && !ads && row) {
+      setAdsLoading(true);
+      fetch(`/api/ads?${new URLSearchParams({ q: row.query, limit: '8', sort: 'creatives' })}`)
+        .then(r => r.json()).then(d => setAds(d.ads || [])).catch(() => setAds([]))
+        .finally(() => setAdsLoading(false));
+    }
+  };
+
+  const chartData = (active?.points || []).map(p => ({
+    // "Sep 15, 2026 at 4:00 AM" -> "Sep 15 4AM" (hourly, default 7-day view)
+    // "Aug 1, 2026" -> "Aug 1" (daily, custom-range view) — both trimmed so
+    // XAxis's minTickGap doesn't suppress most labels on a long axis
+    label: p.date.replace(/, \d{4} at (\d{1,2}):00 ([AP]M)/, ' $1$2').replace(/, \d{4}$/, ''),
     fullDate: p.date,
     value: p.value,
   }));
 
+  const regionMax = Math.max(1, ...(regions?.regions || []).map(r => r.value));
+
   return (
-    <Dialog.Root open={!!row} onOpenChange={o => !o && onClose()}>
+    <Dialog.Root
+      key={row?.query /* fresh range/regions state per row */}
+      open={!!row}
+      onOpenChange={o => { if (!o) { onClose(); setExpanded(false); setRangeData(null); setRegions(null); } }}>
       <Dialog.Portal>
         <Dialog.Backdrop className="panel-backdrop" />
-        <Dialog.Popup className="panel-popup" aria-describedby={undefined}>
+        <Dialog.Popup className={'panel-popup' + (expanded ? ' panel-popup-modal' : '')} aria-describedby={undefined}>
           {row && (
             <>
               <div className="panel-head">
@@ -843,9 +958,16 @@ function TrendDetailPanel({ row, loading, detail, onClose }) {
                   <span className="mono-dim">Trend detail</span>
                   <Dialog.Title className="panel-title">{row.query}</Dialog.Title>
                 </div>
-                <Dialog.Close className="panel-close" aria-label="Close panel">
-                  <Icon.close size={16} />
-                </Dialog.Close>
+                <div className="panel-head-actions">
+                  <button type="button" className="panel-close" onClick={toggleExpanded}
+                    aria-label={expanded ? 'Collapse to side panel' : 'Expand to full view'}
+                    title={expanded ? 'Collapse' : 'Expand for the full graph'}>
+                    {expanded ? <Icon.shrink size={16} /> : <Icon.expand size={16} />}
+                  </button>
+                  <Dialog.Close className="panel-close" aria-label="Close panel">
+                    <Icon.close size={16} />
+                  </Dialog.Close>
+                </div>
               </div>
 
               <div className="panel-stats">
@@ -853,10 +975,17 @@ function TrendDetailPanel({ row, loading, detail, onClose }) {
                   <span className="kpi-v" style={{ fontSize: 20 }}>{row.interest}</span>
                   <span className="kpi-k">Interest</span>
                 </div>
-                <div className="panel-stat">
-                  <span className="kpi-v" style={{ fontSize: 20 }}>{row.advertisers ?? '—'}</span>
-                  <span className="kpi-k">Advertisers</span>
-                </div>
+                {Number(row.advertisers) > 0 ? (
+                  <button type="button" className="panel-stat panel-stat-clickable" onClick={toggleAds}>
+                    <span className="kpi-v" style={{ fontSize: 20 }}>{row.advertisers}</span>
+                    <span className="kpi-k">Advertisers · {adsOpen ? 'hide' : 'view'}</span>
+                  </button>
+                ) : (
+                  <div className="panel-stat">
+                    <span className="kpi-v" style={{ fontSize: 20 }}>{row.advertisers ?? '—'}</span>
+                    <span className="kpi-k">Advertisers</span>
+                  </div>
+                )}
                 {row.swept === true && (
                   <div className="panel-stat">
                     <span className="tag-swept">indexed</span>
@@ -865,19 +994,75 @@ function TrendDetailPanel({ row, loading, detail, onClose }) {
                 )}
               </div>
 
-              <div className="panel-chart-wrap">
-                {loading ? (
+              {adsOpen && (
+                <div className="panel-block">
+                  <b className="mono-dim">Ads matching &quot;{row.query}&quot;</b>
+                  {adsLoading ? (
+                    <div className="sk-line" />
+                  ) : !ads?.length ? (
+                    <p className="detail-desc" style={{ margin: 0 }}>No indexed ads found for this term.</p>
+                  ) : (
+                    <div className="panel-ads-list">
+                      {ads.map(a => (
+                        <Link key={a.library_id} href={`/ad/${a.library_id}`} className="panel-ad-row">
+                          {a.creative_image
+                            ? <img src={a.creative_image} alt="" width={36} height={36} />
+                            : <span className="panel-ad-thumb-empty" aria-hidden="true" />}
+                          <span className="panel-ad-info">
+                            <span className="panel-ad-adv">{a.advertiser_name || 'Unknown advertiser'}</span>
+                            <span className="mono-dim">{a.landing_domain || a.display_domain || '—'}</span>
+                          </span>
+                          <Icon.link size={12} style={{ opacity: .5, flex: 'none' }} />
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Date range: a real re-fetch against Google's own custom-range
+                  format ("YYYY-MM-DD YYYY-MM-DD"), not a client-side slice of
+                  the fixed 7-day window — verified live before wiring this up. */}
+              <div className="panel-range">
+                <label>
+                  <span className="mono-dim">From</span>
+                  <input type="date" value={from} max={to} onChange={e => setFrom(e.target.value)} />
+                </label>
+                <label>
+                  <span className="mono-dim">To</span>
+                  <input type="date" value={to} min={from} max={isoDate(new Date())} onChange={e => setTo(e.target.value)} />
+                </label>
+                <button className="btn btn-ghost" type="button" onClick={applyRange} disabled={rangeLoading}>
+                  {rangeLoading ? 'Loading…' : 'Apply'}
+                </button>
+                {rangeData && (
+                  <button className="btn-mini" type="button" onClick={() => { setRangeData(null); setFrom(daysAgo(7)); setTo(daysAgo(0)); }}>
+                    Reset to 7d
+                  </button>
+                )}
+              </div>
+              {rangeErr && (
+                <p className="panel-range-err">
+                  <Icon.alert size={13} /> {rangeErr}
+                </p>
+              )}
+
+              <div className={'panel-chart-wrap' + (expanded ? ' panel-chart-wrap-lg' : '')}>
+                {isLoadingChart ? (
                   <div className="panel-chart-loading" aria-busy="true">
                     <span className="row-spinner row-spinner-lg" aria-hidden="true" />
-                    <span className="mono-dim">Fetching 7-day trend…</span>
+                    <span className="mono-dim">Fetching trend…</span>
                   </div>
-                ) : !detail?.available ? (
-                  <p className="detail-desc" style={{ margin: 0 }}>{detail?.error || 'No trend data for this term.'}</p>
+                ) : !active?.available ? (
+                  <p className="detail-desc" style={{ margin: 0 }}>{active?.error || 'No trend data for this term.'}</p>
                 ) : chartData.length === 0 ? (
                   <p className="detail-desc" style={{ margin: 0 }}>No data points returned.</p>
                 ) : (
-                  <ResponsiveContainer width="100%" height={260}>
-                    <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                  <ResponsiveContainer width="100%" height={expanded ? 420 : 260}>
+                    {/* left was -16 fighting YAxis's own width=28 reservation,
+                        which clipped the axis numbers off the left edge —
+                        width alone reserves the space, no negative margin needed */}
+                    <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                       <defs>
                         <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.35} />
@@ -896,6 +1081,33 @@ function TrendDetailPanel({ row, loading, detail, onClose }) {
                   </ResponsiveContainer>
                 )}
               </div>
+
+              {/* Regional breakdown — only shown expanded, where there's room.
+                  interestByRegion() was ported from the MCP source earlier
+                  this session but had never been wired into a route until
+                  this build. */}
+              {expanded && (
+                <div className="panel-block">
+                  <b className="mono-dim">Top regions</b>
+                  {regionsLoading ? (
+                    <div className="sk-line" />
+                  ) : !regions?.available ? (
+                    <p className="detail-desc" style={{ margin: 0 }}>{regions?.error || 'Regional data unavailable.'}</p>
+                  ) : (
+                    <div className="region-list">
+                      {regions.regions.map(r => (
+                        <div className="region-row" key={r.code}>
+                          <span className="region-name">{r.region}</span>
+                          <div className="region-bar-track">
+                            <div className="region-bar" style={{ width: `${Math.max(4, (r.value / regionMax) * 100)}%` }} />
+                          </div>
+                          <span className="mono-dim region-value">{r.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {row.articles?.length > 0 && (
                 <div className="panel-block">

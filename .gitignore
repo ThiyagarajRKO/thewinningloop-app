@@ -5,3 +5,4 @@ node_modules/
 payloads/
 dev.log
 backups/
+package-lock.json
