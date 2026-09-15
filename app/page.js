@@ -328,11 +328,11 @@ function AdCard({ ad, i }) {
   const scale = ad.ads_using_creative || 1;
   const bars = Math.min(5, Math.max(1, Math.round(scale / 5)));
   return (
-    <article className="card" data-reveal ref={ref}>
-      <Link className="card-media" href={`/ad/${ad.library_id}`}
-         aria-label={`View details for ${ad.advertiser_name || 'this advertiser'}`}
-         onMouseEnter={e => { const v = e.currentTarget.querySelector('video'); if (v) v.play().catch(() => {}); }}
-         onMouseLeave={e => { const v = e.currentTarget.querySelector('video'); if (v) { v.pause(); v.currentTime = 0; } }}>
+    <Link className="card" href={`/ad/${ad.library_id}`} data-reveal ref={ref}
+       aria-label={`View details for ${ad.advertiser_name || 'this advertiser'}`}
+       onMouseEnter={e => { const v = e.currentTarget.querySelector('video'); if (v) v.play().catch(() => {}); }}
+       onMouseLeave={e => { const v = e.currentTarget.querySelector('video'); if (v) { v.pause(); v.currentTime = 0; } }}>
+      <div className="card-media">
         {ad.creative_video ? (
           <>
             {/* fbcdn mp4 recovered from the raw HTML <video> tag. Poster shows until
@@ -352,7 +352,7 @@ function AdCard({ ad, i }) {
           </span>
           {scale}×
         </span>
-      </Link>
+      </div>
       <div className="card-b">
         <h3 className="card-adv" title={ad.advertiser_name}>{ad.advertiser_name || 'Unknown advertiser'}</h3>
         {ad.body && <p className="card-body">{ad.body}</p>}
@@ -361,7 +361,7 @@ function AdCard({ ad, i }) {
           <span className="card-date">{fmtDate(ad.started_running)}</span>
         </div>
       </div>
-    </article>
+    </Link>
   );
 }
 
