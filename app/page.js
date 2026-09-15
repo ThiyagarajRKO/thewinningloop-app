@@ -9,6 +9,7 @@ import { Icon, BrandMark } from './icons';
    never a fake table of invented numbers. */
 const NAV = [
   { group: 'Ad intelligence', items: [
+    { id: 'research',  label: 'Keyword Research', icon: 'search', live: true },
     { id: 'fb',        label: 'Facebook Adlibrary', icon: 'megaphone', live: true },
     { id: 'tiktok',    label: 'TikTok Adspy',       icon: 'music',
       need: 'Blocked on both routes. The API is research-only (academic/non-profit, EU data only; commercial users explicitly ineligible). And library.tiktok.com/robots.txt disallows /ads, /api and /other-commercial-content by name, plus a blanket Disallow: / — so a scraper is not a legitimate workaround. Licensed resellers (Apify and similar) are the remaining option.' },
@@ -39,7 +40,7 @@ const fmt = n => new Intl.NumberFormat('en-US').format(n ?? 0);
 const fmtDate = d => d ? new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' }).format(new Date(d)) : '';
 
 export default function App() {
-  const [view, setView] = useState('fb');
+  const [view, setView] = useState('research');
   const current = ALL.find(i => i.id === view);
 
   return (
@@ -75,6 +76,7 @@ export default function App() {
           <div className="topbar-right"><SweepMeta /><ThemeToggle /></div>
         </header>
         <main className="content">
+          {view === 'research' && <KeywordResearch onOpenLibrary={() => setView('fb')} />}
           {view === 'fb' && <AdLibrary />}
           {view === 'stores' && <Stores mode="explorer" />}
           {view === 'magic' && <Stores mode="saturation" />}
@@ -91,6 +93,164 @@ function SweepMeta() {
   useEffect(() => { fetch('/api/stats').then(r => r.json()).then(setS).catch(() => {}); }, []);
   if (!s?.stats) return null;
   return <span className="sweep-meta">{fmt(s.stats.ads)} ads · {fmt(s.stats.domains)} stores</span>;
+}
+
+/* Google Trends for the current search phrase — one fetch per query, cached
+   server-side 6h. Shows "unavailable" honestly rather than a fake chart when
+   no snapshot exists yet for this term (snapshots are seeded by the assistant
+   session via the google-trends MCP tool; this app has no direct MCP access). */
+function TrendsCard({ term }) {
+  const [data, setData] = useState(null);
+  const q = term.trim();
+
+  useEffect(() => {
+    if (!q) { setData(null); return; }
+    let live = true;
+    fetch(`/api/trends?q=${encodeURIComponent(q)}`)
+      .then(r => r.json()).then(d => { if (live) setData(d); }).catch(() => setData(null));
+    return () => { live = false; };
+  }, [q]);
+
+  if (!q || !data) return null;
+
+  if (!data.available) {
+    return (
+      <div className="trends-card trends-empty">
+        <Icon.trending size={16} />
+        <span>No Google Trends snapshot for &quot;{q}&quot; yet.</span>
+      </div>
+    );
+  }
+
+  const pts = data.points || [];
+  const max = Math.max(1, ...pts.map(p => p.value));
+  const first = pts[0]?.value ?? 0, last = pts[pts.length - 1]?.value ?? 0;
+  const delta = first > 0 ? Math.round(((last - first) / first) * 100) : 0;
+
+  return (
+    <div className="trends-card">
+      <div className="trends-head">
+        <Icon.trending size={16} />
+        <span className="trends-title">Google Trends · &quot;{data.term}&quot;{data.geo ? ` · ${data.geo}` : ''}</span>
+        <span className={'trends-delta ' + (delta >= 0 ? 'up' : 'down')}>
+          {delta >= 0 ? '+' : ''}{delta}% over period
+        </span>
+      </div>
+      <div className="trends-spark" aria-hidden="true">
+        {pts.map((p, i) => (
+          <i key={i} style={{ height: `${Math.max(4, (p.value / max) * 100)}%` }} title={`${p.date}: ${p.value}`} />
+        ))}
+      </div>
+      <div className="trends-foot">
+        <span>avg interest {data.avg_interest}</span>
+        <span className="mono-dim">as of {new Date(data.fetched_at).toLocaleDateString()}</span>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Keyword Research: one keyword in, ads + demand out ---------- */
+function KeywordResearch({ onOpenLibrary }) {
+  const [q, setQ] = useState('');
+  const [submitted, setSubmitted] = useState('');
+  const [ads, setAds] = useState(null);
+  const [swept, setSwept] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/sweeps').then(r => r.json()).then(d => setSwept(d.sweeps || [])).catch(() => {});
+  }, []);
+
+  const load = async term => {
+    setLoading(true);
+    setSubmitted(term);
+    const adsRes = await fetch(`/api/ads?q=${encodeURIComponent(term)}&sort=creatives&limit=60`)
+      .then(r => r.json()).catch(() => ({ ads: [] }));
+    setAds(adsRes.ads || []);
+    setLoading(false);
+  };
+
+  const onSubmit = e => { e.preventDefault(); if (q.trim()) load(q.trim()); };
+
+  // is this exact term one of the keywords we've actually swept? (case-insensitive)
+  const isSwept = submitted && swept.some(s => s.toLowerCase() === submitted.toLowerCase());
+  const hot = (ads || []).filter(a => a.ads_using_creative >= 5).length;
+  const domains = new Set((ads || []).map(a => a.landing_domain).filter(Boolean));
+
+  return (
+    <>
+      <div className="research-intro">
+        <h1>Keyword Research</h1>
+        <p>Type a product idea. See who is running ads for it and how the market is trending.</p>
+      </div>
+
+      <form className="filters research-form" onSubmit={onSubmit} role="search">
+        <div className="field" style={{ flex: 1, minWidth: 260 }}>
+          <Icon.search />
+          <label htmlFor="rq" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Search keyword</label>
+          <input id="rq" placeholder="e.g. posture corrector, led face mask…" value={q}
+                 onChange={e => setQ(e.target.value)} style={{ width: '100%' }} autoFocus />
+        </div>
+        <button className="btn" type="submit" disabled={loading || !q.trim()}>
+          {loading ? 'Searching…' : 'Research'}
+        </button>
+      </form>
+
+      {!submitted && (
+        <div className="empty">
+          <EmptyGlyph />
+          <h2>Search a product idea</h2>
+          <p>Checks the ads already indexed for that keyword and shows Google Trends alongside them.</p>
+          {swept.length === 0 && (
+            <div className="empty-need">
+              <b>Try one of these — already indexed</b>
+              <code>posture corrector · led face mask</code>
+            </div>
+          )}
+        </div>
+      )}
+
+      {submitted && (
+        <>
+          <TrendsCard term={submitted} />
+
+          {loading ? (
+            <SkeletonGrid />
+          ) : ads && ads.length > 0 ? (
+            <>
+              <div className="kpis">
+                <Kpi label="Ads found" value={ads.length} />
+                <Kpi label="Advertisers" value={new Set(ads.map(a => a.advertiser_handle)).size} />
+                <Kpi label="Stores" value={domains.size} />
+                <Kpi label="Scaling now" value={hot} hint="5+ creatives" />
+              </div>
+              <div className="grid">{ads.map((a, i) => <AdCard key={a.library_id} ad={a} i={i} />)}</div>
+              <button className="btn btn-ghost" style={{ marginTop: 'var(--s4)' }} onClick={onOpenLibrary}>
+                Open full Ad Library for more filters
+              </button>
+            </>
+          ) : (
+            <div className="empty">
+              <EmptyGlyph />
+              <h2>No ads indexed for &quot;{submitted}&quot;</h2>
+              {isSwept ? (
+                <p>This keyword was swept but returned nothing — the term may be too narrow, or the sweep found no active ads that day.</p>
+              ) : (
+                <>
+                  <p>This keyword hasn&apos;t been swept from the Facebook Ad Library yet. Trends above still show demand even with no ads indexed.</p>
+                  <div className="empty-need">
+                    <b>Run a sweep for this keyword</b>
+                    <code>node scripts/scrape-fb.mjs &quot;{submitted}&quot; US 8 22</code>
+                    <code>node scripts/ingest.mjs payloads/&lt;output&gt;.json &quot;{submitted}&quot; US</code>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </>
+      )}
+    </>
+  );
 }
 
 /* ---------- Facebook Ad Library ---------- */
@@ -123,6 +283,9 @@ function AdLibrary() {
         <Kpi label="Stores" value={stats?.stats?.domains} />
         <Kpi label="Scaling now" value={hot} hint="5+ creatives" />
       </div>
+
+      {/* One Trends fetch per SEARCH, not per ad — Google throttles hard past that. */}
+      <TrendsCard term={f.q} />
 
       <form className="filters" onSubmit={onSubmit} role="search">
         <div className="field">

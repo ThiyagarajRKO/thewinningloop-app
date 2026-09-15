@@ -42,8 +42,14 @@ CREATE INDEX IF NOT EXISTS ads_domain_idx     ON ads (landing_domain);
 CREATE INDEX IF NOT EXISTS ads_started_idx    ON ads (started_running DESC NULLS LAST);
 CREATE INDEX IF NOT EXISTS ads_creative_idx   ON ads (ads_using_creative DESC);
 CREATE INDEX IF NOT EXISTS ads_advertiser_idx ON ads (advertiser_handle);
+-- must stay byte-for-byte identical to the expression in app/api/ads/route.js's
+-- search query, or Postgres silently stops using the index and full-scans instead
 CREATE INDEX IF NOT EXISTS ads_fts_idx        ON ads USING gin (
-  to_tsvector('english', coalesce(body,'') || ' ' || coalesce(advertiser_name,''))
+  to_tsvector('english',
+    coalesce(body,'') || ' ' || coalesce(advertiser_name,'') || ' ' ||
+    coalesce(headline,'') || ' ' || coalesce(link_description,'') || ' ' ||
+    coalesce(landing_domain,'') || ' ' || coalesce(display_domain,'')
+  )
 );
 
 -- saved boards
@@ -69,3 +75,17 @@ CREATE TABLE IF NOT EXISTS sweeps (
   ads_new    INT,
   ran_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+
+-- Google Trends snapshots, one per (term, geo). Fetched by the assistant session
+-- via the google-trends MCP tool (this app has no direct MCP access) and written
+-- through POST /api/trends. Read back by GET /api/trends, cached 6h in-process.
+CREATE TABLE IF NOT EXISTS trend_snapshots (
+  id           SERIAL PRIMARY KEY,
+  term         TEXT NOT NULL,
+  geo          TEXT NOT NULL DEFAULT '',
+  points       JSONB NOT NULL,
+  avg_interest NUMERIC,
+  fetched_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS trend_snapshots_lookup ON trend_snapshots (term, geo, fetched_at DESC);

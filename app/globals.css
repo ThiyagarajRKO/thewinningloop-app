@@ -312,3 +312,27 @@ input:focus,select:focus{outline:none;border-color:var(--primary);
 @media (max-width:860px){
   .detail-grid{grid-template-columns:1fr}
 }
+
+
+/* ================= TRENDS CARD ================= */
+.trends-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:var(--s4);margin-bottom:var(--s4);box-shadow:var(--shadow);
+  display:flex;flex-direction:column;gap:var(--s3)}
+.trends-card.trends-empty{flex-direction:row;align-items:center;gap:var(--s2);
+  color:var(--text-muted);font-size:13px;padding:var(--s3) var(--s4)}
+.trends-head{display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap}
+.trends-title{font:600 13px/1 var(--sans);color:var(--text)}
+.trends-delta{margin-left:auto;font:600 11px/1 var(--mono);padding:4px var(--s2);
+  border-radius:var(--r-pill)}
+.trends-delta.up{background:var(--active-fill);color:var(--primary)}
+.trends-delta.down{background:var(--secondary);color:var(--text-muted)}
+.trends-spark{display:flex;align-items:flex-end;gap:2px;height:36px}
+.trends-spark i{flex:1;background:var(--primary);border-radius:1px;opacity:.6;min-height:3px}
+.trends-foot{display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted)}
+
+
+/* ================= KEYWORD RESEARCH ================= */
+.research-intro{margin-bottom:var(--s4)}
+.research-intro h1{font-size:19px;letter-spacing:-.015em;margin-bottom:var(--s1)}
+.research-intro p{color:var(--text-muted);font-size:13px;margin:0}
+.research-form{margin-bottom:var(--s6)}
