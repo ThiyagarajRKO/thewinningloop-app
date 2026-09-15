@@ -23,10 +23,14 @@ export async function GET(_req, { params }) {
   if (!rows.length) return Response.json({ error: 'not found' }, { status: 404 });
   const ad = rows[0];
 
-  // sibling ads from the same advertiser — the "what else are they running" view
+  // sibling ads from the same advertiser — the "what else are they running" view.
+  // Carries the real creative_video/all_images (not just the poster) so the
+  // attachments section can actually play/show and download each one, not
+  // just link back to the sibling's own detail page.
   const { rows: siblings } = await pool.query(
-    `SELECT library_id, headline, creative_image, creative_video_poster,
-            media_type, ads_using_creative, started_running
+    `SELECT library_id, headline, creative_image, creative_video,
+            creative_video_poster, all_images, media_type,
+            ads_using_creative, started_running
        FROM ads
       WHERE advertiser_handle = $1 AND library_id <> $2
       ORDER BY ads_using_creative DESC NULLS LAST

@@ -176,6 +176,30 @@ No dedicated error hue exists in this palette — inventing one wasn't warranted
 inline validation message. Fixed by reusing `text` on `bg` (already text-safe, 16.50/17.26)
 and moving the severity signal to an alert icon instead of a color.
 
+## Ad Score card (detail page)
+First pass used `.kpi`'s compact space-4 padding and inline prose for the three
+sub-scores ("Creative reuse **83**, Run length **27** (3d), ..."), which read flat —
+flagged by the user as not aesthetic. Rebuilt against this lock's own rules rather
+than re-deriving a new look:
+- **space-6 (24px) padding**, not space-4 — this is a content card per the Density
+  rule's own floor, not a compact stat tile.
+- **Number is a real dial**, not sharing `.kpi-v`: `--display` (Archivo) 700/40px so
+  the composite reads as the card's one headline fact, hairline-divided from the tier
+  label rather than crammed onto one baseline.
+- **Sub-scores are meters, not prose** — three labelled bars instead of inline
+  "label **number**" text, per Step 4 rule 1 (show, don't tell).
+- **Severity stays weight-only** — same reasoning as the Contrast catch entry below:
+  no error/warning hue exists in this palette, so tier language ("Strong/Moderate/
+  Early signal") and bar fill carry the signal, not color.
+- Footnote demoted below a hairline with an alert icon at low opacity, so the
+  "this isn't real engagement data" caveat reads as a calm aside, not equal-weight
+  body copy competing with the score itself.
+- **Motion catch**: first draft transitioned the bar's `width` — gate 29 violation
+  (layout property, not transform/opacity), caught by `audit_motion.py` as a HIGH
+  finding (`layout-transition`) after the pass, not before. Fixed to
+  `transform:scaleX()` with `transform-origin:left` and a static `width:100%`, scale
+  factor passed inline instead of a percentage width. Re-ran the scan clean.
+
 ## Scan dispositions (recorded, not silently ignored)
 - `viewport-height` HIGH x2 — **fixed**: `.shell` and `.sidebar` now use `100dvh`.
 - `missing-alt` HIGH at icons.js:2 — **false positive**: line 2 is a comment. Every inline `<svg>` sets

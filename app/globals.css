@@ -284,6 +284,36 @@ a.btn.btn-ghost, button.btn.btn-ghost, .btn.btn-ghost{
 .detail-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
   gap:var(--s6);align-items:start}
 
+/* Ad Score — synthetic score card (creative reuse + run length + advertiser
+   scale). Content-card floor per style-lock Density rule: space-6 (24px)
+   internal padding, not the space-4 a compact stat tile uses. Severity is
+   carried by bar fill / weight, never color (no error/success hue exists
+   in this palette — same reasoning as the panel-range-err catch). The
+   three sub-scores are shown as meters, not inline prose numbers, per the
+   show-don't-tell default. */
+.ad-score{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:var(--s6);box-shadow:var(--shadow);margin-bottom:var(--s4)}
+
+.ad-score-top{display:flex;align-items:center;gap:var(--s4);padding-bottom:var(--s4);
+  margin-bottom:var(--s4);border-bottom:1px solid var(--border)}
+.ad-score-dial{display:flex;align-items:baseline;gap:2px;flex:none}
+.ad-score-num{font:700 40px/1 var(--display);letter-spacing:-.03em;color:var(--text)}
+.ad-score-max{font:600 14px/1 var(--mono);color:var(--text-muted)}
+.ad-score-id{display:flex;flex-direction:column;gap:var(--s1)}
+.ad-score-tier{font:600 13px/1.2 var(--sans);color:var(--text)}
+
+.ad-score-meters{display:flex;flex-direction:column;gap:var(--s3)}
+.ad-score-meter-label{display:flex;justify-content:space-between;align-items:baseline;
+  font:500 12px/1 var(--sans);color:var(--text-muted);margin-bottom:6px}
+.ad-score-meter-val{font:600 12px/1 var(--mono);color:var(--text)}
+.ad-score-bar{height:5px;border-radius:999px;background:var(--secondary);overflow:hidden}
+.ad-score-bar i{display:block;width:100%;height:100%;background:var(--primary);border-radius:inherit;
+  transform-origin:left;transition:transform var(--dur-panel) var(--ease)}
+
+.ad-score-note{display:flex;align-items:flex-start;gap:6px;font:400 11.5px/1.5 var(--sans);
+  color:var(--text-muted);margin-top:var(--s4);padding-top:var(--s4);border-top:1px solid var(--border)}
+.ad-score-note .ico{flex:none;margin-top:1px;opacity:.7}
+
 .detail-media{background:var(--surface);border:1px solid var(--border);
   border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
 .detail-media video,.detail-media img{width:100%;display:block;background:var(--bg)}
@@ -308,8 +338,8 @@ a.btn.btn-ghost, button.btn.btn-ghost, .btn.btn-ghost{
 .detail-block{background:var(--surface);border:1px solid var(--border);
   border-radius:var(--r);padding:var(--s4);box-shadow:var(--shadow);
   display:flex;flex-direction:column;gap:var(--s2);min-width:0}
-.detail-block > b{font:600 10px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;
-  color:var(--text-muted)}
+.detail-block > b,.detail-block-head > b{font:600 10px/1 var(--sans);letter-spacing:.08em;
+  text-transform:uppercase;color:var(--text-muted)}
 .detail-headline{font:600 15px/1.35 var(--sans);margin:0;overflow-wrap:anywhere}
 .detail-desc{font-size:13px;color:var(--text-muted);margin:0;overflow-wrap:anywhere}
 .detail-body{font-size:13px;line-height:1.6;white-space:pre-wrap;margin:0;
@@ -320,11 +350,50 @@ a.btn.btn-ghost, button.btn.btn-ghost, .btn.btn-ghost{
 .kv dt{font:500 12px/1.5 var(--sans);color:var(--text-muted)}
 .kv dd{margin:0;text-align:right}
 
+/* "Open in Ad Library" — was a full-width .btn.btn-ghost sitting alone
+   under the Record block, same visual weight as a real action button for
+   something that's actually a secondary reference link. Redesigned as an
+   inline chip in the block's own header row, right-aligned next to the
+   "Record" label rather than stretching the block. */
+.detail-block-head{display:flex;align-items:center;justify-content:space-between;gap:var(--s3)}
+.ad-library-link{display:inline-flex;align-items:center;gap:5px;font:600 11px/1 var(--sans);
+  color:var(--accent-text);text-decoration:none;padding:var(--s1) 0;
+  transition:opacity var(--dur-ui) var(--ease)}
+.ad-library-link:hover{opacity:.75}
+
 .detail-siblings{margin-top:var(--s8)}
 .detail-siblings h2{font-size:15px;margin-bottom:var(--s4)}
 
+/* Attachments — real per-item media pulled from siblings (video/image/
+   carousel), each individually downloadable. Card language matches .card
+   (the main ad grid) so this section reads as part of the same system
+   rather than a bolted-on component. */
+.detail-attachments{margin-top:var(--s8)}
+.detail-attachments-head{display:flex;align-items:flex-start;justify-content:space-between;
+  gap:var(--s4);margin-bottom:var(--s4)}
+.detail-attachments-head h2{font-size:15px;margin-bottom:var(--s1)}
+.detail-attachments-head p{margin:0}
+
+.attach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:var(--s4)}
+.attach-card{position:relative;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);
+  transition:border-color var(--dur-ui) var(--ease)}
+.attach-card:hover{border-color:var(--text-muted)}
+
+.attach-media{display:block;position:relative;aspect-ratio:1;background:var(--bg)}
+.attach-media img,.attach-media video{width:100%;height:100%;object-fit:cover;display:block}
+.attach-badge{position:absolute;top:var(--s2);right:var(--s2);display:flex;align-items:center;
+  gap:4px;background:var(--surface);border:1px solid var(--border);color:var(--text);
+  padding:var(--s1) var(--s2);border-radius:var(--r-pill);font:600 10px/1.4 var(--mono);
+  box-shadow:var(--shadow)}
+
+.attach-foot{display:flex;align-items:center;justify-content:space-between;
+  padding:var(--s2) var(--s3);border-top:1px solid var(--border)}
+.attach-foot .btn-mini{padding:6px;border-radius:var(--r-sm)}
+
 @media (max-width:860px){
   .detail-grid{grid-template-columns:1fr}
+  .detail-attachments-head{flex-direction:column}
 }
 
 
