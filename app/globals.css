@@ -659,3 +659,143 @@ a.btn.btn-ghost, button.btn.btn-ghost, .btn.btn-ghost{
     transform:none;opacity:0}
   .region-row{grid-template-columns:88px 1fr 28px}
 }
+
+
+/* ================= SIDEBAR FOOTER (legal links + sign out) ================= */
+/* margin-top:auto pins this to the bottom of the sidebar, which is already a
+   flex column, so it never floats in the middle of a short feature list.
+   The form is display:contents so its submit button is laid out by this
+   container — a <button> cannot be an <a>, but it can look identical. */
+.sidebar-foot{margin-top:auto;display:flex;flex-direction:column;gap:2px;
+  padding:var(--s3) var(--s2);border-top:1px solid var(--border)}
+.sidebar-foot form{display:contents}
+.sidebar-foot .nav-item{font-size:12.5px}
+.sidebar-foot .nav-item .ico{opacity:.65}
+
+
+/* ================= AUTH (sign in) ================= */
+/* Same surface model as the rest of the app: one white card on the tinted-grey
+   canvas, separated by a hairline and raised elevation. No new tokens and no
+   new hues — a rejected sign-in carries severity with the alert icon and the
+   surrounding fill, exactly like .panel-range-err, because this palette has no
+   dedicated error hue and inventing one here would break the lock. */
+.auth-wrap{position:relative;min-height:100dvh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:var(--s6);padding:var(--s6)}
+.auth-theme{position:absolute;top:var(--s4);right:var(--s4)}
+
+.auth-card{width:min(392px,100%);background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);box-shadow:var(--shadow-raised);padding:var(--s8);
+  display:flex;flex-direction:column;gap:var(--s4)}
+.auth-brand{display:flex;align-items:center;gap:var(--s2)}
+.auth-brand .brand-name{font-size:15px}
+.auth-card h1{font-size:21px;letter-spacing:-.015em;margin-bottom:var(--s2)}
+.auth-sub{font-size:13px;line-height:1.6;color:var(--text-muted);margin:0}
+.auth-sub code{font:500 12px/1.6 var(--mono);color:var(--accent-text);overflow-wrap:anywhere}
+
+.auth-form{display:flex;flex-direction:column;gap:var(--s4);margin-top:var(--s1)}
+.auth-field{display:flex;flex-direction:column;gap:6px}
+.auth-field label{display:flex;align-items:center;gap:6px;font:600 10px/1 var(--sans);
+  letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)}
+.auth-field .ico{opacity:.7}
+.auth-field input{width:100%}
+/* .btn is inline-flex and would stretch to the card width anyway inside a
+   flex column; spelling it out keeps the intent visible. */
+.auth-form .btn{width:100%;justify-content:center;margin-top:var(--s1)}
+
+.auth-error{display:flex;align-items:flex-start;gap:var(--s2);margin:0;
+  background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);
+  padding:var(--s3);font:500 12.5px/1.55 var(--sans);color:var(--text)}
+.auth-error .ico{flex:none;margin-top:1px;color:var(--text-muted)}
+
+.auth-note{margin:0;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);
+  padding:var(--s3);font:400 12px/1.6 var(--sans);color:var(--text-muted)}
+.auth-note b{color:var(--text);font-weight:600}
+.auth-note code,.auth-error code{font:500 11.5px/1.6 var(--mono);color:var(--accent-text)}
+
+.auth-error + .auth-note,.auth-note + .auth-form{margin-top:0}
+
+/* --- links to the two legal documents ---
+   Plain text, per request: no card, no icon, no chrome — so the eye stays on
+   the form. Muted by default, dropping to full-strength text on hover, the
+   same treatment the metadata lines already use. Not a second call to action
+   competing with the Sign in button. */
+.auth-legal{display:flex;align-items:center;justify-content:center;gap:var(--s3);
+  flex-wrap:wrap;font:400 12px/1.6 var(--sans)}
+.auth-legal a{color:var(--text-muted)}
+.auth-legal a:hover{color:var(--text);text-decoration:underline}
+/* decorative separator (aria-hidden), so deliberately quiet */
+.auth-legal .sep{color:var(--text-muted);opacity:.5}
+
+
+/* ================= LEGAL (privacy / terms) ================= */
+/* A reading surface, not a dashboard: one column capped at ~72ch so legal
+   prose stays inside a comfortable measure. Body copy runs in --text rather
+   than --text-muted — this is the one place on the site where the words ARE
+   the content, so they get full contrast and a 1.75 line-height. */
+.legal-page{display:flex;flex-direction:column;min-height:100dvh}
+
+.legal-top{position:sticky;top:0;z-index:10;display:flex;align-items:center;
+  gap:var(--s2);padding:0 var(--s6);height:var(--topbar-h);background:var(--surface);
+  border-bottom:1px solid var(--border)}
+.legal-brand{display:flex;align-items:center;gap:var(--s2)}
+.legal-brand .brand-name{font-size:14px}
+.legal-top-right{margin-left:auto;display:flex;align-items:center;gap:var(--s3)}
+.legal-back{display:flex;align-items:center;gap:5px;font:500 12px/1 var(--sans);
+  color:var(--text-muted)}
+.legal-back:hover{color:var(--text)}
+
+.legal-wrap{flex:1;width:100%;max-width:760px;margin:0 auto;
+  padding:var(--s8) var(--s6) calc(var(--s8) * 1.5)}
+
+.legal-head{display:flex;gap:var(--s4);padding-bottom:var(--s6);margin-bottom:var(--s8);
+  border-bottom:1px solid var(--border)}
+.legal-head h1{font-size:26px;letter-spacing:-.02em;margin-bottom:var(--s2)}
+.legal-head p{margin:0;color:var(--text-muted);font-size:13px;line-height:1.7;max-width:62ch}
+.legal-icon{flex:none;display:flex;align-items:center;justify-content:center;
+  width:44px;height:44px;border-radius:var(--r);background:var(--surface);
+  border:1px solid var(--border);color:var(--primary);box-shadow:var(--shadow)}
+.legal-meta{font:500 11px/1.6 var(--mono);color:var(--text-muted);margin-top:var(--s3)}
+
+.legal-body section{margin-bottom:var(--s8)}
+.legal-body section:last-child{margin-bottom:0}
+.legal-body h2{display:flex;align-items:baseline;gap:var(--s3);font-size:15px;
+  letter-spacing:-.01em;margin-bottom:var(--s3)}
+.legal-body h2 .n{flex:none;font:600 11px/1 var(--mono);color:var(--text-muted)}
+.legal-body p{font-size:14px;line-height:1.75;margin:0 0 var(--s3)}
+.legal-body p:last-child{margin-bottom:0}
+.legal-body ul{margin:0 0 var(--s3);padding-left:var(--s6);
+  display:flex;flex-direction:column;gap:var(--s2)}
+.legal-body ul:last-child{margin-bottom:0}
+.legal-body li{font-size:14px;line-height:1.7}
+.legal-body li::marker{color:var(--text-muted)}
+.legal-body b{font-weight:600}
+.legal-body code{font:500 12.5px/1.6 var(--mono);color:var(--accent-text);
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);
+  padding:1px 5px;overflow-wrap:anywhere}
+.legal-body a{color:var(--accent-text);text-decoration:underline;text-underline-offset:2px}
+
+.legal-foot{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s3);
+  margin-top:var(--s8);padding-top:var(--s6);border-top:1px solid var(--border);
+  font:400 12px/1.6 var(--sans);color:var(--text-muted)}
+.legal-foot a{color:var(--text)}
+.legal-foot a:hover{text-decoration:underline}
+/* decorative only (both separators are aria-hidden) */
+.legal-foot .sep{opacity:.5}
+
+@media (max-width:900px){
+  /* The sidebar turns into a horizontal bar below this width, so the footer
+     has to turn with it or it becomes a vertical stack inside a row. */
+  .sidebar-foot{margin-top:0;flex-direction:row;align-items:center;gap:var(--s2);
+    padding:var(--s2) var(--s3);border-top:0;border-left:1px solid var(--border)}
+  .sidebar-foot .nav-item{width:auto;white-space:nowrap}
+}
+@media (max-width:640px){
+  .legal-top{padding:0 var(--s4)}
+  /* the chevron-less "Back to app" text is the useful half; drop the icon
+     rather than the label on a narrow bar */
+  .legal-back .ico{display:none}
+  .legal-wrap{padding:var(--s6) var(--s4) var(--s8)}
+  .legal-head{flex-direction:column;gap:var(--s3)}
+  .legal-head h1{font-size:22px}
+  .auth-card{padding:var(--s6)}
+}

@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { Icon, BrandMark } from "./icons";
 
 /* Nav mirrors AdVault's feature set. `live` = real data behind it today.
@@ -100,6 +101,30 @@ export function Sidebar({ view, onSelect }) {
           </div>
         ))}
       </nav>
+
+      {/* Footer: the two legal documents and the way out, pinned to the bottom
+          (the sidebar is already a flex column, so margin-top:auto does it).
+          Sign out is a plain form POST to a route handler rather than a
+          fetch() — it works with JavaScript disabled, and clearing a session
+          over GET would make any third-party <img src> able to log the user
+          out. Lives here rather than in each page's topbar so all three
+          shells (main, ad detail, brand detail) get it from one place. */}
+      <div className="sidebar-foot">
+        <Link className="nav-item" href="/privacy">
+          <Icon.shield />
+          <span>Privacy Policy</span>
+        </Link>
+        <Link className="nav-item" href="/terms">
+          <Icon.document />
+          <span>Terms &amp; Conditions</span>
+        </Link>
+        <form action="/api/auth/logout" method="post">
+          <button className="nav-item" type="submit">
+            <Icon.logout />
+            <span>Sign out</span>
+          </button>
+        </form>
+      </div>
     </aside>
   );
 }
