@@ -10,6 +10,10 @@ const PUBLIC_PATHS = [
   "/login", // must be reachable, obviously
   "/privacy", // Meta/Google app review and any platform verification fetch
   "/terms", // these anonymously — a login wall would fail the review
+  "/api/auth/tiktok/callback", // TikTok redirects the advertiser's browser
+  // here with no session cookie of ours — must be reachable unauthenticated
+  // or the OAuth flow can never complete. The route itself verifies the
+  // state cookie it set in /api/auth/tiktok, so this isn't an open endpoint.
 ];
 
 const isPublic = (pathname) =>
