@@ -1,9 +1,9 @@
 import { LegalShell, LEGAL } from "../legal";
 
 export const metadata = {
-  title: "Terms & Conditions · AdVault",
+  title: "Terms & Conditions · TheWinningLoop",
   description:
-    "The terms governing use of the AdVault advertising-research tool.",
+    "The terms governing use of the TheWinningLoop advertising-research tool.",
 };
 
 export default function TermsAndConditions() {

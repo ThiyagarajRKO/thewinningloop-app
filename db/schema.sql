@@ -1,4 +1,4 @@
--- AdVault: ad-spy schema (v1)
+-- TheWinningLoop: ad-spy schema (v1)
 -- Field contract derived from 120 live Facebook Ad Library cards.
 
 CREATE TABLE IF NOT EXISTS advertisers (

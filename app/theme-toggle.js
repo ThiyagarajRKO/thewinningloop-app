@@ -15,7 +15,7 @@ export function ThemeToggle() {
     const next = theme === "dark" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", next);
     try {
-      localStorage.setItem("advault-theme", next);
+      localStorage.setItem("thewinningloop-theme", next);
     } catch {}
     setTheme(next);
   };

@@ -14,8 +14,8 @@ import {
 } from "../../lib/auth.mjs";
 
 export const metadata = {
-  title: "Sign in · AdVault",
-  description: "Sign in to AdVault.",
+  title: "Sign in · TheWinningLoop",
+  description: "Sign in to TheWinningLoop.",
   // A login form is not a search result.
   robots: { index: false, follow: false },
 };
@@ -85,14 +85,14 @@ export default async function LoginPage({ searchParams }) {
         <div className="auth-brand">
           <BrandMark size={26} />
           <span className="brand-name">
-            Ad<em>Vault</em>
+            The<em>WinningLoop</em>
           </span>
         </div>
 
         <div>
           <h1>Sign in</h1>
           <p className="auth-sub">
-            AdVault has a single operator account. Use the credentials held in
+            TheWinningLoop has a single operator account. Use the credentials held in
             the server&apos;s <code>AUTH_USERNAME</code> and{" "}
             <code>AUTH_PASSWORD</code> settings.
           </p>

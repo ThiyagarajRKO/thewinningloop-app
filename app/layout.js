@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "AdVault",
+  title: "TheWinningLoop",
   description: "Ad spy and product research over the Facebook Ad Library.",
 };
 
@@ -7,7 +7,7 @@ export const metadata = {
 // Explicit choice (localStorage) wins over the system preference, per the skill's
 // runtime-toggle pattern.
 const NO_FLASH = `(function(){try{
-var s=localStorage.getItem('advault-theme');
+var s=localStorage.getItem('thewinningloop-theme');
 var d=s?s:(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
 document.documentElement.setAttribute('data-theme',d);
 }catch(e){document.documentElement.setAttribute('data-theme','light');}})();`;

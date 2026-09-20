@@ -1,4 +1,4 @@
-# Style lock — AdVault
+# Style lock — TheWinningLoop
 
 Established 2026-09-15. Cold start (no references, no prior profile).
 
@@ -68,7 +68,7 @@ surface/accent 6.33, accent/border 5.53, primary/on-primary 4.57
 ## Dark mode
 **Runtime toggle — both modes ship, user-switchable.** `data-theme` attribute on
 `<html>`, defaulting from `prefers-color-scheme`, explicit choice persisted to
-`localStorage` under `advault-theme`, applied by a pre-paint inline script in
+`localStorage` under `thewinningloop-theme`, applied by a pre-paint inline script in
 `layout.js` so a returning dark user sees no flash of light.
 
 

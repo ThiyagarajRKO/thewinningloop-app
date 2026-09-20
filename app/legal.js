@@ -17,8 +17,8 @@ import { ThemeToggle } from "./theme-toggle";
    you actually operate in before relying on them.
    ============================================================ */
 export const LEGAL = {
-  product: "AdVault",
-  contactEmail: "support@advault.app",
+  product: "TheWinningLoop",
+  contactEmail: "support@thewinningloop.com",
   jurisdiction: "the State of Delaware, United States",
   updated: "17 September 2026",
 };
@@ -41,7 +41,7 @@ export function LegalShell({ icon, title, intro, children }) {
         >
           <BrandMark size={18} />
           <span className="brand-name">
-            Ad<em>Vault</em>
+            The<em>WinningLoop</em>
           </span>
         </Link>
         <div className="legal-top-right">

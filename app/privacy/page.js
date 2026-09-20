@@ -1,9 +1,9 @@
 import { LegalShell, LEGAL } from "../legal";
 
 export const metadata = {
-  title: "Privacy Policy · AdVault",
+  title: "Privacy Policy · TheWinningLoop",
   description:
-    "What AdVault stores, where it comes from, how long it is kept, and how to have it removed.",
+    "What TheWinningLoop stores, where it comes from, how long it is kept, and how to have it removed.",
 };
 
 export default function PrivacyPolicy() {
@@ -132,7 +132,7 @@ export default function PrivacyPolicy() {
         <p>Exactly one cookie is set by this application:</p>
         <ul>
           <li>
-            <code>advault_session</code> — a signed, <b>HttpOnly</b> token that
+            <code>thewinningloop_session</code> — a signed, <b>HttpOnly</b> token that
             records that you are signed in and when the session expires. It is
             set with <code>SameSite=Lax</code> and is marked <code>Secure</code>{" "}
             over HTTPS. It contains a username and two timestamps; it is not a
@@ -143,7 +143,7 @@ export default function PrivacyPolicy() {
         <p>
           Separately, your light/dark theme choice is saved in your
           browser&apos;s <code>localStorage</code> under the key{" "}
-          <code>advault-theme</code>. That value never leaves your device and is
+          <code>thewinningloop-theme</code>. That value never leaves your device and is
           not sent to the server.
         </p>
         <p>

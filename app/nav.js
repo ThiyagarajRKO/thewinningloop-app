@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { Icon, BrandMark } from "./icons";
 
-/* Nav mirrors AdVault's feature set. `live` = real data behind it today.
+/* Nav mirrors TheWinningLoop's feature set. `live` = real data behind it today.
    Locked features render an honest not-connected state naming exactly what each needs —
    never a fake table of invented numbers.
    Shared between the main shell (app/page.js) and the ad detail page (app/ad/[id]/page.js)
@@ -73,7 +73,7 @@ export function Sidebar({ view, onSelect }) {
       <div className="brand">
         <BrandMark />
         <span className="brand-name">
-          Ad<em>Vault</em>
+          The<em>WinningLoop</em>
         </span>
       </div>
       <nav className="nav" aria-label="Features">
