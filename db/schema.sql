@@ -130,3 +130,20 @@ CREATE TABLE IF NOT EXISTS trend_snapshots (
   fetched_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS trend_snapshots_lookup ON trend_snapshots (term, geo, fetched_at DESC);
+
+
+-- TikTok for Business OAuth token, for the operator's OWN ad account(s)
+-- (campaign/ad reporting via the Business API). This is NOT the TikTok Ad
+-- Library discovery feature blocked in app/nav.js and brand_profiles above —
+-- that gap (research-only API, robots.txt disallow) is unrelated and still
+-- unresolved. Single-operator app, so this is one singleton row, not a users
+-- table: id is always 1, enforced by the CHECK.
+CREATE TABLE IF NOT EXISTS tiktok_oauth_tokens (
+  id                  INT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  advertiser_id       TEXT,               -- TikTok advertiser_id returned alongside the token
+  access_token        TEXT NOT NULL,
+  access_token_expire  TIMESTAMPTZ,       -- TikTok access tokens are long-lived; null if not returned
+  scope               TEXT[] DEFAULT '{}',
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
